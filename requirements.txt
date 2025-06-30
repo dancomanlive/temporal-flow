@@ -1,0 +1,13 @@
+requests
+openai
+# Temporal Python SDK
+temporalio==1.13.0
+
+# For typing support
+typing-extensions==4.9.0
+
+# For JSON handling and utilities
+pydantic==2.5.3
+
+# For development and debugging
+rich==13.7.0

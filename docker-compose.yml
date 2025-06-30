@@ -1,0 +1,85 @@
+services:
+  # The worker for the specific incident workflow state machine
+  # We define it fully here, without inheriting.
+  incident-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PYTHONPATH=/app
+    volumes:
+      - ./src:/app/src
+    command: ["python", "-m", "src.incident_workflow.run_worker"]
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+
+  # The worker for the top-level coordinator workflow
+  # We also define it fully.
+  coordinator-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PYTHONPATH=/app
+    volumes:
+      - ./src:/app/src
+    command: ["python", "-m", "src.coordinator_workflow.run_worker"]
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+
+  # --- Temporal Stack ---
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    ports: ["7233:7233"]
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+    networks:
+      - temporal-network
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    ports: ["8080:8080"]
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+
+  postgresql:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=temporal
+      - POSTGRES_PASSWORD=temporal
+    ports: ["5432:5432"]
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+    networks:
+      - temporal-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "temporal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  temporal-postgres-data:
+
+networks:
+  temporal-network:
