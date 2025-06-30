@@ -1,12 +1,8 @@
 # src/coordinator_workflow/activities.py
 
-import json
 import os
-import uuid
-from typing import Any, Dict, List, Optional
-
-"""import openai"""
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List
+from pydantic import BaseModel
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
@@ -49,18 +45,6 @@ class CoordinatorActivities:
             activity.logger.warning("No available workflow for this event type.")
             raise ApplicationError("No available workflow for this event type.", non_retryable=True)
 
-    @activity.defn
-    async def load_workflow_definition(self, params: LoadDefinitionParams) -> LoadDefinitionResult:
-        """Load the workflow definition JSON from the filesystem."""
-        json_path = os.path.join(params.workflows_base_dir, params.workflow_name, f"{params.workflow_name}.json")
-        activity.logger.info(f"Loading definition for '{params.workflow_name}' from {json_path}")
-        if not os.path.exists(json_path):
-            raise ApplicationError(f"Definition for '{params.workflow_name}' not found at {json_path}.", non_retryable=True)
-        try:
-            with open(json_path, "r") as f:
-                return LoadDefinitionResult(workflow_def=json.load(f))
-        except (IOError, json.JSONDecodeError) as e:
-            raise ApplicationError(f"Cannot load/parse definition for '{params.workflow_name}': {e}", non_retryable=True)
 
     @activity.defn
     async def get_available_workflows(self) -> List[str]:

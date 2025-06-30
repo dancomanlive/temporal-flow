@@ -14,7 +14,6 @@ async def main():
         activities=[
             activities_instance.get_available_workflows,
             activities_instance.choose_workflow,
-            activities_instance.load_workflow_definition,
         ],
     )
     await worker.run()

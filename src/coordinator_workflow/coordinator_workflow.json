@@ -1,0 +1,38 @@
+{
+  "id": "coordinator_workflow",
+  "initial": "waiting_for_event",
+  "states": {
+    "waiting_for_event": {
+      "on": {
+        "trigger": {
+          "target": "select_workflow",
+          "action": {
+            "name": "get_available_workflows",
+            "type": "activity"
+          }
+        }
+      }
+    },
+    "select_workflow": {
+      "on": {
+        "workflow_selected": {
+          "target": "run_child_workflow",
+          "action": {
+            "name": "choose_workflow",
+            "type": "activity"
+          }
+        }
+      }
+    },
+    "run_child_workflow": {
+      "on": {
+        "child_completed": {
+          "target": "done"
+        }
+      }
+    },
+    "done": {
+      "type": "final"
+    }
+  }
+}
