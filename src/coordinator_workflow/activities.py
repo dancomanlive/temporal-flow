@@ -1,5 +1,6 @@
 # src/coordinator_workflow/activities.py
 
+import json
 import os
 from typing import Any, Dict, List
 from pydantic import BaseModel
@@ -62,6 +63,30 @@ class CoordinatorActivities:
                 available.append(d)
         activity.logger.info(f"Found available workflows: {available}")
         return available
+
+    @activity.defn
+    async def load_workflow_definition(self, params: LoadDefinitionParams) -> LoadDefinitionResult:
+        """Load the JSON definition file for a specific workflow."""
+        workflow_name = params.workflow_name
+        workflows_base_dir = params.workflows_base_dir
+        
+        activity.logger.info(f"Loading definition for workflow: '{workflow_name}'")
+        
+        # Construct the path to the JSON definition file
+        json_path = os.path.join(workflows_base_dir, workflow_name, f"{workflow_name}.json")
+        
+        if not os.path.exists(json_path):
+            activity.logger.error(f"Definition file not found: {json_path}")
+            raise ApplicationError(f"Workflow definition file not found for '{workflow_name}'", non_retryable=True)
+        
+        try:
+            with open(json_path, 'r') as f:
+                workflow_def = json.load(f)
+            activity.logger.info(f"Successfully loaded definition for '{workflow_name}'")
+            return LoadDefinitionResult(workflow_def=workflow_def)
+        except (json.JSONDecodeError, IOError) as e:
+            activity.logger.error(f"Failed to load workflow definition: {e}")
+            raise ApplicationError(f"Failed to load workflow definition for '{workflow_name}': {e}", non_retryable=True)
 
 # Export an instance for the worker to discover
 activities_instance = CoordinatorActivities()

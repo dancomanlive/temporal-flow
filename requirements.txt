@@ -11,3 +11,8 @@ pydantic==2.5.3
 
 # For development and debugging
 rich==13.7.0
+
+# Testing dependencies
+pytest==7.4.4
+pytest-asyncio==0.21.1
+pytest-cov==6.2.1
