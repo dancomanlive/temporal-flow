@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src ./src
+COPY wait_for_temporal.py .
 
 # Default command (can be overridden)
 # THIS IS THE CORRECTED LINE:

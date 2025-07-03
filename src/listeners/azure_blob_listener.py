@@ -14,6 +14,7 @@ except ImportError:
     AZURE_AVAILABLE = False
 
 from temporalio.client import Client
+from src.utils import connect_to_temporal_with_retry
 
 
 class AzureBlobEventListener:
@@ -72,7 +73,7 @@ class AzureBlobEventListener:
         self.logger.info(f"Task Queue: {self.task_queue}")
         
         # Initialize Temporal client
-        self.temporal_client = await Client.connect(self.temporal_address)
+        self.temporal_client = await connect_to_temporal_with_retry(self.temporal_address)
         
         # Start polling loop
         while True:

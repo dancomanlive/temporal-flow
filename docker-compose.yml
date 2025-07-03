@@ -11,11 +11,18 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.incident_workflow.run_worker"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.incident_workflow.run_worker"]
     networks:
       - temporal-network
     depends_on:
       - temporal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "wait_for_temporal.py", "--health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # The Root Orchestrator workflow worker
   root-orchestrator-worker:
@@ -28,11 +35,18 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.root_orchestrator.run_worker"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.root_orchestrator.run_worker"]
     networks:
       - temporal-network
     depends_on:
       - temporal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "wait_for_temporal.py", "--health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # S3 Event Listener Service
   s3-listener:
@@ -48,7 +62,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.listeners.s3_event_listener"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.listeners.s3_event_listener"]
     networks:
       - temporal-network
     depends_on:
@@ -71,7 +85,7 @@ services:
       - AZURE_SERVICEBUS_SUBSCRIPTION=${AZURE_SERVICEBUS_SUBSCRIPTION:-temporal-subscription}
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.listeners.azure_blob_listener"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.listeners.azure_blob_listener"]
     networks:
       - temporal-network
     depends_on:
@@ -93,7 +107,7 @@ services:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.listeners.webhook_listener"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.listeners.webhook_listener"]
     ports:
       - "8000:8000"
     networks:
