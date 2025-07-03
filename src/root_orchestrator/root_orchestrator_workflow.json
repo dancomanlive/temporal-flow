@@ -1,0 +1,49 @@
+{
+  "id": "root_orchestrator_workflow",
+  "initial": "waiting_for_event",
+  "states": {
+    "waiting_for_event": {
+      "on": {
+        "trigger": {
+          "target": "validate_event",
+          "action": {
+            "name": "validate_event",
+            "type": "activity"
+          }
+        }
+      }
+    },
+    "validate_event": {
+      "on": {
+        "validation_complete": {
+          "target": "route_event",
+          "action": {
+            "name": "route_event",
+            "type": "activity"
+          }
+        }
+      }
+    },
+    "route_event": {
+      "on": {
+        "routing_complete": {
+          "target": "execute_child_workflow",
+          "action": {
+            "name": "execute_child_workflow",
+            "type": "child_workflow"
+          }
+        }
+      }
+    },
+    "execute_child_workflow": {
+      "on": {
+        "child_completed": {
+          "target": "done"
+        }
+      }
+    },
+    "done": {
+      "type": "final"
+    }
+  }
+}

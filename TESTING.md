@@ -28,11 +28,16 @@ The testing strategy follows a **non-rigid unit testing** approach that focuses 
 ```
 tests/
 ├── __init__.py
-├── coordinator_workflow/
+├── domain/
+│   ├── __init__.py
+│   └── test_workflow_routing.py
+├── incident_workflow/
 │   ├── __init__.py
 │   └── test_activities.py
-└── incident_workflow/
+└── root_orchestrator/
     ├── __init__.py
+    └── test_activities.py
+```
     └── test_activities.py
 ```
 
@@ -54,25 +59,36 @@ pip install pytest pytest-asyncio
 
 ## Test Coverage
 
-### Coordinator Workflow Tests (`tests/coordinator_workflow/test_activities.py`)
+### Root Orchestrator Tests (`tests/root_orchestrator/test_activities.py`)
 
-#### `choose_workflow` Activity
-- ✅ Happy path: valid event_type matches available workflow
-- ✅ Case insensitive matching
-- ✅ Event type not in available workflows
-- ✅ Unknown event types
+#### Event Validation
+- ✅ Valid event processing
+- ✅ Missing event type validation
+- ✅ Empty event type validation  
+- ✅ Invalid source type validation
+- ✅ Non-dict event validation
 
-#### `get_available_workflows` Activity
-- ✅ Mocked filesystem with valid workflows
-- ✅ Empty directory handling
-- ✅ Coordinator workflow exclusion
-- ✅ Missing JSON definition files
+#### Event Routing
+- ✅ Route by event type
+- ✅ Route by source
+- ✅ Default workflow routing
+- ✅ Custom configuration support
+- ✅ No matching workflow handling
+- ✅ Disabled workflow handling
+- ✅ Invalid custom configuration handling
 
-#### `load_workflow_definition` Activity
-- ✅ Successful JSON loading
-- ✅ File not found scenarios
-- ✅ Invalid JSON handling
-- ✅ IO error handling
+### Domain Logic Tests (`tests/domain/test_workflow_routing.py`)
+
+#### Workflow Router
+- ✅ Route by event type
+- ✅ Route by source
+- ✅ Default workflow routing
+- ✅ Case insensitive routing
+- ✅ Priority: event type over source
+- ✅ Missing event fields handling
+- ✅ No match, no default handling
+- ✅ Disabled workflow handling
+- ✅ Nonexistent workflow handling
 
 ### Incident Workflow Tests (`tests/incident_workflow/test_activities.py`)
 
@@ -94,7 +110,7 @@ async def test_get_available_workflows_with_mocked_fs(
     self, mock_listdir: MagicMock, mock_isdir: MagicMock, mock_exists: MagicMock
 ):
     # Setup mocks to simulate filesystem
-    mock_listdir.return_value = ["incident_workflow", "coordinator_workflow"]
+    mock_listdir.return_value = ["incident_workflow", "document_workflow"]
     # ... test logic
 ```
 
@@ -130,11 +146,7 @@ When moving from filesystem scanning to configuration-based workflow discovery:
 ### ✅ **Hexagonal Architecture Support**
 Current filesystem tests demonstrate adapter testing patterns:
 ```python
-# Current: Testing filesystem adapter
-@patch("os.listdir")
-async def test_filesystem_adapter(self, mock_listdir):
-
-# Future: Testing S3 adapter  
+# Example: Testing adapter patterns
 @patch("boto3.client")
 async def test_s3_adapter(self, mock_s3):
 ```
@@ -161,7 +173,7 @@ For workflow orchestration testing:
 # Use Temporal's testing framework
 from temporalio.testing import WorkflowEnvironment
 
-async def test_coordinator_workflow_orchestration():
+async def test_orchestration():
     async with WorkflowEnvironment() as env:
         # Test workflow orchestration logic
 ```
@@ -200,7 +212,7 @@ For full system validation:
 3. **Mock Not Working**
    ```python
    # Ensure patch targets are correct
-   @patch("src.coordinator_workflow.activities.os.listdir")  # Full path
+   @patch("src.domain.workflow_routing.some_function")  # Full path
    ```
 
 ## Contributing Test Guidelines

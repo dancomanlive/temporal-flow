@@ -17,9 +17,8 @@ services:
     depends_on:
       - temporal
 
-  # The worker for the top-level coordinator workflow
-  # We also define it fully.
-  coordinator-worker:
+  # The Root Orchestrator workflow worker
+  root-orchestrator-worker:
     build:
       context: .
       dockerfile: Dockerfile
@@ -29,11 +28,81 @@ services:
       - PYTHONPATH=/app
     volumes:
       - ./src:/app/src
-    command: ["python", "-m", "src.coordinator_workflow.run_worker"]
+    command: ["python", "-m", "src.root_orchestrator.run_worker"]
     networks:
       - temporal-network
     depends_on:
       - temporal
+
+  # S3 Event Listener Service
+  s3-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PYTHONPATH=/app
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+    volumes:
+      - ./src:/app/src
+    command: ["python", "-m", "src.listeners.s3_event_listener"]
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+    restart: unless-stopped
+    profiles:
+      - listeners
+
+  # Azure Blob Event Listener Service
+  azure-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PYTHONPATH=/app
+      - AZURE_SERVICEBUS_CONNECTION_STRING=${AZURE_SERVICEBUS_CONNECTION_STRING:-}
+      - AZURE_SERVICEBUS_TOPIC=${AZURE_SERVICEBUS_TOPIC:-blob-events}
+      - AZURE_SERVICEBUS_SUBSCRIPTION=${AZURE_SERVICEBUS_SUBSCRIPTION:-temporal-subscription}
+    volumes:
+      - ./src:/app/src
+    command: ["python", "-m", "src.listeners.azure_blob_listener"]
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+    restart: unless-stopped
+    profiles:
+      - listeners
+
+  # HTTP Webhook Listener Service
+  webhook-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PYTHONPATH=/app
+      - WEBHOOK_PORT=8000
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+    volumes:
+      - ./src:/app/src
+    command: ["python", "-m", "src.listeners.webhook_listener"]
+    ports:
+      - "8000:8000"
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+    restart: unless-stopped
+    profiles:
+      - listeners
 
   # --- Temporal Stack ---
 
