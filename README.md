@@ -28,12 +28,23 @@ SharePoint, etc.   HTTP Webhooks       & Activities        Processing, etc.
 # Build Docker images
 docker compose build --no-cache
 
-# Start core services (Temporal + workers)
+# Start core services (Temporal + workers) - Always works
 docker compose up -d
 
-# Start with event listeners (optional)
+# Optional: Start with event listeners (only if external services configured)
 docker compose --profile listeners up -d
 ```
+
+**Core Services Include:**
+- Temporal server & UI
+- PostgreSQL database  
+- Root orchestrator worker
+- Incident workflow worker
+
+**Event Listeners (Optional):**
+- S3 event listener (requires AWS SQS configuration)
+- Azure blob listener (requires Azure Service Bus configuration)  
+- Webhook listener (works without configuration, but WEBHOOK_SECRET recommended)
 
 ### 2. Test the Root Orchestrator
 
@@ -76,6 +87,18 @@ temporal workflow signal \
 
 Open the Temporal Web UI: [http://localhost:8080/namespaces/default/workflows](http://localhost:8080/namespaces/default/workflows)
 
+### 4. Run Tests (Optional)
+
+Validate everything works with the test suite:
+
+```bash
+# Run all tests in Docker (recommended)
+./run_docker_tests.sh
+
+# Or run tests locally
+./run_tests.sh
+```
+
 ## Configuration
 
 ### Event Routing
@@ -105,6 +128,36 @@ cp .env.example .env
 
 ## Event Listeners
 
+Event listeners are **optional components** that connect external services to the Temporal Flow Engine. They start only when properly configured and gracefully shut down when configuration is missing.
+
+### Core vs Event Listeners
+
+**Core Services (Always Start):**
+- ✅ Temporal server & workers
+- ✅ PostgreSQL database  
+- ✅ Root orchestrator
+- ✅ Domain workflows
+
+**Event Listeners (Start Only When Configured):**
+- 🔧 S3 Event Listener - requires `SQS_QUEUE_URL`
+- 🔧 Azure Blob Listener - requires `AZURE_SERVICEBUS_CONNECTION_STRING`
+- 🔧 Webhook Listener - optional `WEBHOOK_SECRET`
+
+### Deployment Options
+
+```bash
+# Option 1: Core services only (no external integrations)
+docker compose up -d
+
+# Option 2: Core + specific listeners
+docker compose up -d  # Core first
+export SQS_QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123/s3-events"
+docker compose up s3-listener -d  # Add S3 listener
+
+# Option 3: Core + all listeners (when all external services configured)
+docker compose --profile listeners up -d
+```
+
 ### S3 Event Listener
 
 Monitors SQS queue for S3 notifications:
@@ -116,7 +169,8 @@ export AWS_ACCESS_KEY_ID="your-key"
 export AWS_SECRET_ACCESS_KEY="your-secret"
 
 # Run listener
-python -m src.listeners.s3_event_listener
+docker compose up s3-listener -d
+# OR: python -m src.listeners.s3_event_listener
 ```
 
 ### Azure Blob Listener
@@ -130,7 +184,8 @@ export AZURE_SERVICEBUS_TOPIC="blob-events"
 export AZURE_SERVICEBUS_SUBSCRIPTION="temporal-subscription"
 
 # Run listener
-python -m src.listeners.azure_blob_listener
+docker compose up azure-listener -d
+# OR: python -m src.listeners.azure_blob_listener
 ```
 
 ### HTTP Webhook Listener
@@ -138,12 +193,40 @@ python -m src.listeners.azure_blob_listener
 HTTP server for webhook notifications:
 
 ```bash
-# Configure environment
+# Configure environment (optional)
 export WEBHOOK_PORT="8000"
-export WEBHOOK_SECRET="your-secret"
+export WEBHOOK_SECRET="your-secret"  # Optional but recommended for production
 
 # Run listener
-python -m src.listeners.webhook_listener
+docker compose up webhook-listener -d
+# OR: python -m src.listeners.webhook_listener
+```
+
+### Graceful Configuration Handling
+
+When environment variables are missing, listeners behave gracefully:
+
+**S3 Listener without `SQS_QUEUE_URL`:**
+```
+WARNING - SQS_QUEUE_URL environment variable is not set
+INFO - S3 Event Listener will not start without SQS configuration
+INFO - To enable S3 event listening, set SQS_QUEUE_URL environment variable
+INFO - S3 Event Listener shutting down gracefully...
+```
+
+**Azure Listener without `AZURE_SERVICEBUS_CONNECTION_STRING`:**
+```
+WARNING - AZURE_SERVICEBUS_CONNECTION_STRING environment variable is not set
+INFO - Azure Blob Event Listener will not start without Service Bus configuration
+INFO - To enable Azure blob event listening, set AZURE_SERVICEBUS_CONNECTION_STRING
+INFO - Azure Blob Event Listener shutting down gracefully...
+```
+
+**Webhook Listener without `WEBHOOK_SECRET`:**
+```
+WARNING - WEBHOOK_SECRET environment variable is not set
+INFO - Webhook listener will start without signature verification
+INFO - For production, set WEBHOOK_SECRET environment variable
 ```
 
 #### Webhook Endpoints
@@ -180,20 +263,46 @@ for doc_uri in documents:
 
 ## Testing
 
-Run all tests:
+### Docker Testing (Recommended)
+
+Run tests in a containerized environment identical to production:
+
 ```bash
-pytest
+# Quick test run using the script
+./run_docker_tests.sh
+
+# Or run directly with docker compose
+docker compose --profile test run --rm test-runner
+
+# Run specific test suites
+docker compose --profile test run --rm test-runner python -m pytest tests/domain/ -v
+docker compose --profile test run --rm test-runner python -m pytest tests/root_orchestrator/ -v
+docker compose --profile test run --rm test-runner python -m pytest tests/incident_workflow/ -v
+
+# Run tests with detailed coverage report
+docker compose --profile test run --rm test-runner python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing
 ```
 
-Run specific test suites:
+**Benefits of Docker Testing:**
+- ✅ Consistent environment across development and CI/CD
+- ✅ No local Python environment setup required
+- ✅ Same Docker image used for testing and production
+- ✅ Automatic dependency isolation
+
+The HTML coverage report will be available at `htmlcov/index.html`.
+
+### Local Testing (Development Alternative)
+
+For rapid development iterations, you can also run tests locally:
+
 ```bash
-# Domain logic tests
+# Using the shell script (sets up venv automatically)
+./run_tests.sh
+
+# Or directly with pytest (requires local Python setup)
+pytest
 pytest tests/domain/
-
-# Root orchestrator tests
 pytest tests/root_orchestrator/
-
-# Incident workflow tests
 pytest tests/incident_workflow/
 ```
 

@@ -336,10 +336,17 @@ async def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
+    logger = logging.getLogger(__name__)
+    
     # Get configuration from environment
     port = int(os.getenv('WEBHOOK_PORT', '8000'))
     temporal_address = os.getenv('TEMPORAL_ADDRESS', 'temporal:7233')
     webhook_secret = os.getenv('WEBHOOK_SECRET')
+    
+    if not webhook_secret:
+        logger.warning("WEBHOOK_SECRET environment variable is not set")
+        logger.info("Webhook listener will start without signature verification")
+        logger.info("For production, set WEBHOOK_SECRET environment variable")
     
     # Create and start listener
     listener = WebhookEventListener(

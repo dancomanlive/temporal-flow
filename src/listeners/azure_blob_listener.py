@@ -275,10 +275,16 @@ async def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
+    logger = logging.getLogger(__name__)
+    
     # Get configuration from environment
     connection_string = os.getenv('AZURE_SERVICEBUS_CONNECTION_STRING')
     if not connection_string:
-        raise ValueError("AZURE_SERVICEBUS_CONNECTION_STRING environment variable is required")
+        logger.warning("AZURE_SERVICEBUS_CONNECTION_STRING environment variable is not set")
+        logger.info("Azure Blob Event Listener will not start without Service Bus configuration")
+        logger.info("To enable Azure blob event listening, set AZURE_SERVICEBUS_CONNECTION_STRING environment variable")
+        logger.info("Azure Blob Event Listener shutting down gracefully...")
+        return
     
     topic_name = os.getenv('AZURE_SERVICEBUS_TOPIC', 'blob-events')
     subscription_name = os.getenv('AZURE_SERVICEBUS_SUBSCRIPTION', 'temporal-subscription')

@@ -248,10 +248,16 @@ async def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
+    logger = logging.getLogger(__name__)
+    
     # Get configuration from environment
     sqs_queue_url = os.getenv('SQS_QUEUE_URL')
     if not sqs_queue_url:
-        raise ValueError("SQS_QUEUE_URL environment variable is required")
+        logger.warning("SQS_QUEUE_URL environment variable is not set")
+        logger.info("S3 Event Listener will not start without SQS configuration")
+        logger.info("To enable S3 event listening, set SQS_QUEUE_URL environment variable")
+        logger.info("S3 Event Listener shutting down gracefully...")
+        return
     
     temporal_address = os.getenv('TEMPORAL_ADDRESS', 'temporal:7233')
     

@@ -67,7 +67,7 @@ services:
       - temporal-network
     depends_on:
       - temporal
-    restart: unless-stopped
+    restart: "no"  # Don't restart if configuration is missing
     profiles:
       - listeners
 
@@ -90,7 +90,7 @@ services:
       - temporal-network
     depends_on:
       - temporal
-    restart: unless-stopped
+    restart: "no"  # Don't restart if configuration is missing
     profiles:
       - listeners
 
@@ -117,6 +117,26 @@ services:
     restart: unless-stopped
     profiles:
       - listeners
+
+  # Test Runner Service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pytest.ini:/app/pytest.ini
+      - ./htmlcov:/app/htmlcov  # Mount coverage output directory
+    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--cov=src", "--cov-report=html", "--cov-report=term"]
+    networks:
+      - temporal-network
+    profiles:
+      - test
 
   # --- Temporal Stack ---
 
