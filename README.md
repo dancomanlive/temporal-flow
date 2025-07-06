@@ -151,7 +151,7 @@ docker compose up -d
 
 # Option 2: Core + specific listeners
 docker compose up -d  # Core first
-export SQS_QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123/s3-events"
+export SQS_QUEUE_URL="https://sqs.region.amazonaws.com/account-id/queue-name"
 docker compose up s3-listener -d  # Add S3 listener
 
 # Option 3: Core + all listeners (when all external services configured)
@@ -164,9 +164,9 @@ Monitors SQS queue for S3 notifications:
 
 ```bash
 # Configure environment
-export SQS_QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123456789/s3-events"
-export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_HERE"
-export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY_HERE"
+export SQS_QUEUE_URL="https://sqs.region.amazonaws.com/account-id/queue-name"
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
 
 # Run listener
 docker compose up s3-listener -d
@@ -179,7 +179,7 @@ Monitors Service Bus for blob events:
 
 ```bash
 # Configure environment
-export AZURE_SERVICEBUS_CONNECTION_STRING="Endpoint=sb://..."
+export AZURE_SERVICEBUS_CONNECTION_STRING="Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=..."
 export AZURE_SERVICEBUS_TOPIC="blob-events"
 export AZURE_SERVICEBUS_SUBSCRIPTION="temporal-subscription"
 
@@ -195,7 +195,7 @@ HTTP server for webhook notifications:
 ```bash
 # Configure environment (optional)
 export WEBHOOK_PORT="8000"
-export WEBHOOK_SECRET="your-secret"  # Optional but recommended for production
+export WEBHOOK_SECRET="${WEBHOOK_SECRET}"  # Optional but recommended for production
 
 # Run listener
 docker compose up webhook-listener -d
@@ -244,8 +244,8 @@ INFO - For production, set WEBHOOK_SECRET environment variable
 from src.adapters.s3_document_store import S3DocumentStore
 
 store = S3DocumentStore(
-    aws_access_key_id="YOUR_AWS_ACCESS_KEY_HERE",
-    aws_secret_access_key="YOUR_AWS_SECRET_KEY_HERE",
+    aws_access_key_id="${AWS_ACCESS_KEY_ID}",
+    aws_secret_access_key="${AWS_SECRET_ACCESS_KEY}",
     region_name="us-east-1"
 )
 
@@ -331,9 +331,13 @@ The platform includes an AI-powered chat interface (`chat-ui/`) that helps users
 
 **Quick Start:**
 ```bash
-# Start the chat UI
+# Start the AI chatbot reference (recommended - includes all AI SDK 5 features)
 ./run_chat_ui.sh
-# Or with Docker
+
+# Or start the simple chat UI (basic implementation, works immediately)  
+./run_simple_chat_ui.sh
+
+# Or with Docker (simple version only)
 docker compose --profile ui up -d
 ```
 

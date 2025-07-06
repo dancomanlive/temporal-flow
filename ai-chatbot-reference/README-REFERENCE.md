@@ -107,17 +107,55 @@ Based on the reference implementation, we could consider:
 
 ## Running the Reference Implementation
 
-If you want to run the reference implementation locally:
+**⚠️ Database Requirement**: The reference implementation requires a PostgreSQL database for authentication and chat persistence. For local testing, you have a few options:
 
+### Option 1: Quick Testing (Limited Functionality)
 ```bash
 cd ai-chatbot-reference
-pnpm install
+pnpm dev
+# Visit http://localhost:3001
+# Note: Authentication will fail, but you can explore the UI
+```
+
+### Option 2: Full Setup with Database
+```bash
+cd ai-chatbot-reference
+
+# 1. Set up a local PostgreSQL database or use Vercel Postgres
+# 2. Copy and configure environment variables
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your database credentials
+
+# 3. Run database migrations
+pnpm db:migrate
+
+# 4. Start the development server
 pnpm dev
 ```
 
-**Note**: The reference implementation requires additional setup (database, auth providers, etc.) - see their README.md for complete instructions.
+### Option 3: Use Our Simplified Chat-UI Instead
+For immediate AI chat functionality without database setup:
+```bash
+# Go back to our simplified implementation
+cd ../chat-ui
+npm run dev
+# Visit http://localhost:3000 - works immediately!
+```
+
+### Environment Variables Needed for Full Functionality
+
+```bash
+# Required for authentication
+AUTH_SECRET=your-generated-secret
+
+# Required for AI functionality  
+XAI_API_KEY=your-openai-api-key
+
+# Required for full functionality
+POSTGRES_URL=your-postgres-connection-string
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+REDIS_URL=your-redis-connection-string
+```
 
 ## Security Note
 
