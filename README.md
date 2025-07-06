@@ -165,8 +165,8 @@ Monitors SQS queue for S3 notifications:
 ```bash
 # Configure environment
 export SQS_QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123456789/s3-events"
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
+export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_HERE"
+export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY_HERE"
 
 # Run listener
 docker compose up s3-listener -d
@@ -244,8 +244,8 @@ INFO - For production, set WEBHOOK_SECRET environment variable
 from src.adapters.s3_document_store import S3DocumentStore
 
 store = S3DocumentStore(
-    aws_access_key_id="your-key",
-    aws_secret_access_key="your-secret",
+    aws_access_key_id="YOUR_AWS_ACCESS_KEY_HERE",
+    aws_secret_access_key="YOUR_AWS_SECRET_KEY_HERE",
     region_name="us-east-1"
 )
 
@@ -315,6 +315,55 @@ The Root Orchestrator provides a modern, configuration-driven approach to workfl
 3. **Multiple event sources** support
 4. **Hexagonal architecture** for clean separation of concerns
 5. **External event listeners** instead of internal polling
+
+## Chat UI and AI Integration
+
+### Temporal Flow Chat Assistant
+
+The platform includes an AI-powered chat interface (`chat-ui/`) that helps users interact with Temporal workflows using natural language. Built with AI SDK 5 Beta and specialized for Temporal workflow orchestration.
+
+**Features:**
+- 🤖 **AI SDK 5 Beta** integration with OpenAI
+- 🔄 **Real-time streaming** responses  
+- 🛠 **Temporal expertise** - specialized knowledge of workflows, activities, and best practices
+- 🎨 **Modern UI** with Next.js and Tailwind CSS
+- 🔒 **Secure configuration** with environment variables
+
+**Quick Start:**
+```bash
+# Start the chat UI
+./run_chat_ui.sh
+# Or with Docker
+docker compose --profile ui up -d
+```
+
+### AI SDK 5 Reference Implementation
+
+The `ai-chatbot-reference/` folder contains the official [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) as a reference implementation for learning advanced AI SDK 5 patterns.
+
+**Why This Reference?**
+- 📚 **Learning resource** for AI SDK 5 best practices
+- 🔍 **Feature comparison** with our simplified implementation  
+- 🛠 **Advanced patterns** like tool calling, multi-modal support, and database integration
+- 💡 **Inspiration** for future enhancements
+
+**Key Differences:**
+| Feature | Our Chat-UI | Vercel Reference |
+|---------|-------------|------------------|
+| **Purpose** | Temporal workflow assistance | General-purpose chatbot |
+| **Complexity** | Simple, focused | Full-featured application |
+| **Database** | Stateless | PostgreSQL with persistence |
+| **Authentication** | None | Complete user management |
+| **Tools** | None | Web search, code execution |
+| **File Support** | None | Images, documents, CSV |
+
+**Staying Synced:**
+```bash
+# Update reference implementation
+git sync-chatbot
+```
+
+See [`ai-chatbot-reference/README-REFERENCE.md`](ai-chatbot-reference/README-REFERENCE.md) for detailed comparison and learning opportunities.
 
 ## Documentation
 

@@ -1,0 +1,130 @@
+# Vercel AI Chatbot Reference
+
+This folder contains the official [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) as a reference implementation for AI SDK 5 Beta.
+
+## Purpose
+
+This reference implementation serves as:
+
+1. **Learning Resource**: See best practices for AI SDK 5 implementation
+2. **Feature Comparison**: Compare our Temporal-focused chat-ui with a full-featured chatbot
+3. **Migration Guide**: Understand advanced AI SDK 5 patterns and features
+4. **Inspiration**: Discover new capabilities for future enhancements
+
+## Key Features in Reference Implementation
+
+### 🤖 **AI SDK 5 Beta Features**
+- **Version**: `ai@5.0.0-beta.6`
+- **Multi-provider support**: OpenAI, Anthropic, Google, etc.
+- **Advanced streaming**: Real-time UI updates
+- **Tool calling**: Web search, code execution, document processing
+- **Multi-modal**: Text, images, and file uploads
+
+### 🎨 **UI/UX Features**
+- **Modern interface**: Beautiful, responsive design with Tailwind CSS
+- **Real-time streaming**: Character-by-character response streaming
+- **File uploads**: Image and document support
+- **Chat history**: Persistent conversation management
+- **User authentication**: Complete user management system
+
+### 🛠 **Technical Features**
+- **Database integration**: PostgreSQL with Drizzle ORM
+- **Authentication**: NextAuth.js 5.0 beta
+- **Testing**: Playwright end-to-end tests
+- **Monitoring**: OpenTelemetry integration
+- **Deployment**: Vercel-optimized
+
+## Key Differences from Our Implementation
+
+| Feature | Our chat-ui | Vercel Reference |
+|---------|-------------|------------------|
+| **Focus** | Temporal workflow assistance | General-purpose chatbot |
+| **AI SDK Version** | 5.0 Beta | 5.0 Beta (same) |
+| **Database** | None (stateless) | PostgreSQL with full persistence |
+| **Authentication** | None | Full user management |
+| **File Support** | None | Images, documents, CSV |
+| **Tools** | None | Web search, code execution |
+| **UI Framework** | Custom Tailwind | Radix UI + Tailwind |
+| **Complexity** | Simple, focused | Full-featured application |
+
+## Staying in Sync
+
+To update the reference implementation:
+
+```bash
+# Easy sync with our custom alias
+git sync-chatbot
+
+# Or the full command
+git subtree pull --prefix=ai-chatbot-reference https://github.com/vercel/ai-chatbot.git main --squash
+```
+
+## Learning Opportunities
+
+### 1. **Advanced AI SDK 5 Patterns**
+- Look at `ai-chatbot-reference/app/api/chat/route.ts` for advanced streaming
+- Check `ai-chatbot-reference/lib/ai/` for multi-provider setup
+- Study tool implementations in `ai-chatbot-reference/lib/tools/`
+
+### 2. **UI Components**
+- Examine `ai-chatbot-reference/components/chat/` for chat UI patterns
+- Study `ai-chatbot-reference/components/ui/` for reusable components
+- Check streaming patterns in React components
+
+### 3. **Database Integration**
+- See `ai-chatbot-reference/lib/db/` for conversation persistence
+- Study user management patterns
+- Learn about chat history implementation
+
+### 4. **Testing Patterns**
+- Check `ai-chatbot-reference/tests/` for E2E testing with Playwright
+- Study API testing patterns
+- Learn about chat flow testing
+
+## Potential Enhancements for Our Chat-UI
+
+Based on the reference implementation, we could consider:
+
+1. **Tool Integration**: Add Temporal-specific tools
+   - Workflow status checking
+   - Activity execution monitoring
+   - Error diagnosis assistance
+
+2. **Enhanced Streaming**: Improve real-time feedback
+   - Progress indicators for long operations
+   - Structured response formatting
+   - Better error handling
+
+3. **Conversation Context**: Add conversation memory
+   - Remember previous workflow discussions
+   - Context-aware suggestions
+   - Session persistence
+
+4. **Multi-modal Support**: Support for diagrams and files
+   - Workflow diagram uploads
+   - Configuration file analysis
+   - Log file processing
+
+## Running the Reference Implementation
+
+If you want to run the reference implementation locally:
+
+```bash
+cd ai-chatbot-reference
+pnpm install
+cp .env.example .env
+# Edit .env with your API keys
+pnpm dev
+```
+
+**Note**: The reference implementation requires additional setup (database, auth providers, etc.) - see their README.md for complete instructions.
+
+## Security Note
+
+The reference implementation includes advanced security patterns:
+- Environment variable management
+- API key protection
+- User authentication
+- Input validation
+
+These patterns complement our pre-commit hook security system.

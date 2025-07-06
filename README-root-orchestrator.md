@@ -104,8 +104,8 @@ Polls SQS queue for S3 notifications:
 
 ```bash
 export SQS_QUEUE_URL="https://sqs.us-east-1.amazonaws.com/123456789/s3-events"
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
+export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_HERE"
+export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY_HERE"
 python -m src.listeners.s3_event_listener
 ```
 
@@ -145,8 +145,8 @@ python -m src.listeners.webhook_listener
 from src.adapters.s3_document_store import S3DocumentStore
 
 store = S3DocumentStore(
-    aws_access_key_id="your-key",
-    aws_secret_access_key="your-secret",
+    aws_access_key_id="YOUR_AWS_ACCESS_KEY_HERE",
+    aws_secret_access_key="YOUR_AWS_SECRET_KEY_HERE",
     region_name="us-east-1"
 )
 
