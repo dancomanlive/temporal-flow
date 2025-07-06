@@ -1,0 +1,79 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.14 0 285.86);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0 285.86);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0 285.86);
+  --primary: oklch(0.52 0.19 275.61);
+  --primary-foreground: oklch(0.98 0 285.86);
+  --secondary: oklch(0.96 0.01 286.38);
+  --secondary-foreground: oklch(0.52 0.02 285.86);
+  --muted: oklch(0.96 0.01 286.38);
+  --muted-foreground: oklch(0.45 0.01 286.38);
+  --accent: oklch(0.96 0.01 286.38);
+  --accent-foreground: oklch(0.52 0.02 285.86);
+  --destructive: oklch(0.62 0.24 27.33);
+  --destructive-foreground: oklch(0.98 0 285.86);
+  --border: oklch(0.91 0.01 286.38);
+  --input: oklch(0.91 0.01 286.38);
+  --ring: oklch(0.52 0.19 275.61);
+  --chart-1: oklch(0.62 0.19 12.18);
+  --chart-2: oklch(0.71 0.14 166.5);
+  --chart-3: oklch(0.72 0.16 60.62);
+  --chart-4: oklch(0.64 0.16 285.35);
+  --chart-5: oklch(0.76 0.09 16.93);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.14 0 285.86);
+  --foreground: oklch(0.99 0 0);
+  --card: oklch(0.14 0 285.86);
+  --card-foreground: oklch(0.99 0 0);
+  --popover: oklch(0.14 0 285.86);
+  --popover-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.99 0 0);
+  --primary-foreground: oklch(0.26 0.01 285.86);
+  --secondary: oklch(0.26 0.01 285.86);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.26 0.01 285.86);
+  --muted-foreground: oklch(0.65 0.01 285.86);
+  --accent: oklch(0.26 0.01 285.86);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.62 0.24 27.33);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.26 0.01 285.86);
+  --input: oklch(0.26 0.01 285.86);
+  --ring: oklch(0.87 0.03 285.86);
+  --chart-1: oklch(0.78 0.15 12.18);
+  --chart-2: oklch(0.81 0.11 166.5);
+  --chart-3: oklch(0.82 0.13 60.62);
+  --chart-4: oklch(0.74 0.13 285.35);
+  --chart-5: oklch(0.86 0.07 16.93);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+  }
+  html {
+    scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
+  }
+  #__next {
+    height: 100%;
+  }
+}
