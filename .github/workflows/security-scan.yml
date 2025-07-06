@@ -1,0 +1,63 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    name: Scan for secrets
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for comprehensive scanning
+    
+    - name: Install TruffleHog
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+    
+    - name: Run TruffleHog scan
+      run: |
+        trufflehog git file://. --only-verified --fail
+    
+    - name: Custom secret patterns scan
+      run: |
+        echo "🔍 Scanning for custom secret patterns..."
+        
+        # Define secret patterns
+        PATTERNS=(
+          "sk-[a-zA-Z0-9]+"
+          "sk-proj-[a-zA-Z0-9_-]+"
+          "OPENAI_API_KEY=[^$][^}]"
+          "github_pat_[0-9A-Za-z_]+"
+          "ghp_[0-9A-Za-z]+"
+          "AIza[0-9A-Za-z_-]+"
+        )
+        
+        # Scan all files
+        secrets_found=false
+        for pattern in "${PATTERNS[@]}"; do
+          if git grep -E "$pattern" HEAD -- ':(exclude).git' ':(exclude)*.md' ':(exclude)SECURITY.md'; then
+            echo "❌ Found potential secret matching pattern: $pattern"
+            secrets_found=true
+          fi
+        done
+        
+        if [ "$secrets_found" = true ]; then
+          echo "🚫 Secrets detected in repository!"
+          exit 1
+        else
+          echo "✅ No secrets detected"
+        fi
+    
+    - name: Report results
+      if: failure()
+      run: |
+        echo "::error::🚫 Secret scanning failed! Secrets may be present in the repository."
+        echo "::error::Please review the scan results above and remove any exposed secrets."
+        echo "::error::Remember to revoke any exposed keys and generate new ones."
