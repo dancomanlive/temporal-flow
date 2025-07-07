@@ -1,13 +1,31 @@
 
 from temporalio import workflow
+from ..domain.workflow_inputs import IncidentWorkflowInput
 
 
 @workflow.defn
 class IncidentWorkflow:
     @workflow.run
-    async def run(self, initial_context=None):
+    async def run(self, input: IncidentWorkflowInput = None):
         from datetime import timedelta
-        context = initial_context or {}
+        
+        # Handle None input for backwards compatibility
+        if input is None:
+            input = IncidentWorkflowInput()
+            
+        # Convert to context dict for activity execution
+        context = {
+            "incident_id": input.incident_id,
+            "source": input.source,
+            "severity": input.severity,
+            "message": input.message,
+            "event_type": input.event_type,
+            "timestamp": input.timestamp,
+        }
+        
+        # Add additional context if provided
+        if input.additional_context:
+            context.update(input.additional_context)
 
         # Step 1: Detect incident
         result = await workflow.execute_activity(

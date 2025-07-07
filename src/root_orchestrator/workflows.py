@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Dict, Any, Optional
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
+from ..domain.workflow_inputs import RootOrchestratorInput, IncidentWorkflowInput
 
 
 @workflow.defn  
@@ -40,20 +41,31 @@ class RootOrchestratorWorkflow:
         self._configuration = config
 
     @workflow.run
-    async def run(self, input: Optional[Dict[str, Any]] = None) -> str:
+    async def run(self, input: RootOrchestratorInput = None) -> str:
         """Main workflow execution.
         
         Args:
-            input: Optional initial input (can contain configuration)
+            input: Structured input containing event payload and configuration
             
         Returns:
             String describing the orchestration result
         """
+        # Handle None input for backwards compatibility
+        if input is None:
+            input = RootOrchestratorInput()
+            
+        # Use provided configuration or default
+        if input.configuration:
+            self._configuration = input.configuration
+            
+        # Set event payload for signal handling
+        if input.event_payload:
+            self._event_payload = input.event_payload
+            
         workflow.logger.info("RootOrchestratorWorkflow started. Waiting for event signal...")
         
-        # Handle initial configuration from input
-        if input and "configuration" in input:
-            self._configuration = input["configuration"]
+        # Load configuration if provided
+        if input.configuration:
             workflow.logger.info("Loaded initial configuration from input")
         
         # Wait for the trigger signal
@@ -162,7 +174,7 @@ class RootOrchestratorWorkflow:
             workflow.logger.warning(f"Unknown workflow type: {workflow_name}, returning mock result")
             return {"status": "completed", "workflow": workflow_name, "input": child_input}
 
-    def _prepare_child_input(self, workflow_name: str, event_payload: Dict[str, Any]) -> Dict[str, Any]:
+    def _prepare_child_input(self, workflow_name: str, event_payload: Dict[str, Any]) -> Any:
         """Prepare input for the child workflow based on workflow type and event.
         
         Args:
@@ -170,29 +182,40 @@ class RootOrchestratorWorkflow:
             event_payload: Original event payload
             
         Returns:
-            Prepared input dictionary for the child workflow
+            Prepared dataclass input for the child workflow
         """
-        # Base input with event information
-        child_input = {
-            "event": event_payload,
-            "eventType": event_payload.get("eventType"),
-            "source": event_payload.get("source"),
-        }
-        
-        # Workflow-specific input preparation
+        # Workflow-specific input preparation using dataclasses
         if workflow_name == "incident_workflow":
-            # For incident workflow, pass the initial_prompt
-            child_input["initial_prompt"] = event_payload.get("message", "System event detected")
+            return IncidentWorkflowInput(
+                incident_id=event_payload.get("incident_id"),
+                source=event_payload.get("source"),
+                severity=event_payload.get("severity", "medium"),
+                message=event_payload.get("message", "System event detected"),
+                event_type=event_payload.get("eventType"),
+                timestamp=event_payload.get("timestamp"),
+                additional_context=event_payload
+            )
             
         elif workflow_name == "document_processing_workflow":
-            # For document processing, include document location
-            child_input["document_uri"] = event_payload.get("documentUri", event_payload.get("source_uri"))
-            child_input["bucket"] = event_payload.get("bucket")
-            child_input["key"] = event_payload.get("key")
+            # For document processing, return a dict for now (until we create its dataclass)
+            return {
+                "document_uri": event_payload.get("documentUri", event_payload.get("source_uri")),
+                "bucket": event_payload.get("bucket"),
+                "key": event_payload.get("key"),
+                "event": event_payload,
+                "eventType": event_payload.get("eventType"),
+                "source": event_payload.get("source"),
+            }
             
         elif workflow_name == "data_processing_workflow":
-            # For data processing, include data source information
-            child_input["data_source"] = event_payload.get("dataSource", event_payload.get("source"))
-            child_input["processing_type"] = event_payload.get("processingType", "default")
+            # For data processing, return a dict for now (until we create its dataclass)
+            return {
+                "data_source": event_payload.get("dataSource", event_payload.get("source")),
+                "processing_type": event_payload.get("processingType", "default"),
+                "event": event_payload,
+                "eventType": event_payload.get("eventType"),
+                "source": event_payload.get("source"),
+            }
         
-        return child_input
+        # Default fallback - return original payload
+        return event_payload
