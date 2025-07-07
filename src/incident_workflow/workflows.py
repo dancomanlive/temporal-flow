@@ -1,6 +1,7 @@
 
 from temporalio import workflow
 from ..domain.workflow_inputs import IncidentWorkflowInput
+from .activities import IncidentContext
 
 
 @workflow.defn
@@ -13,42 +14,41 @@ class IncidentWorkflow:
         if input is None:
             input = IncidentWorkflowInput()
             
-        # Convert to context dict for activity execution
-        context = {
-            "incident_id": input.incident_id,
-            "source": input.source,
-            "severity": input.severity,
-            "message": input.message,
-            "event_type": input.event_type,
-            "timestamp": input.timestamp,
-        }
-        
-        # Add additional context if provided
-        if input.additional_context:
-            context.update(input.additional_context)
+        # Create typed context for activities
+        context = IncidentContext(
+            initial_prompt=input.message,
+            incident_id=input.incident_id,
+            severity=input.severity,
+        )
 
         # Step 1: Detect incident
-        result = await workflow.execute_activity(
+        detection_result = await workflow.execute_activity(
             "detect_incident", context, schedule_to_close_timeout=timedelta(seconds=60)
         )
-        context.update(result)
+        # Update context with detection results
+        context.incident_id = detection_result.incident_id
+        context.severity = detection_result.severity
 
         # Step 2: Analyze logs
-        result = await workflow.execute_activity(
+        analysis_result = await workflow.execute_activity(
             "analyze_logs", context, schedule_to_close_timeout=timedelta(seconds=120)
         )
-        context.update(result)
+        # Update context with analysis results
+        context.analysis_summary = analysis_result.analysis_summary
 
         # Step 3: Send notification
-        result = await workflow.execute_activity(
+        notification_result = await workflow.execute_activity(
             "send_notification", context, schedule_to_close_timeout=timedelta(seconds=60)
         )
-        context.update(result)
+        # Update context with notification results
+        context.notification_status = notification_result.notification_status
 
         # Step 4: Mark complete
-        result = await workflow.execute_activity(
+        resolution_result = await workflow.execute_activity(
             "mark_complete", context, schedule_to_close_timeout=timedelta(seconds=60)
         )
-        context.update(result)
+        # Update context with resolution results
+        context.resolution_status = resolution_result.resolution_status
 
-        return context
+        # Return the final context as a dict for backwards compatibility
+        return context.model_dump()
