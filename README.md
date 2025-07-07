@@ -320,51 +320,56 @@ The Root Orchestrator provides a modern, configuration-driven approach to workfl
 
 ### Temporal Flow Chat Assistant
 
-The platform includes an AI-powered chat interface (`ai-chatbot-reference/`) that helps users interact with Temporal workflows using natural language. Built with AI SDK 5 Beta and specialized for Temporal workflow orchestration.
+The platform includes an AI-powered chat interface (`vercel_ai_chatbot/`) that helps users interact with Temporal workflows using natural language. Built with AI SDK 5 Beta and specialized for Temporal workflow orchestration.
 
 **Features:**
-- 🤖 **AI SDK 5 Beta** integration with OpenAI
+- 🤖 **AI SDK 5 Beta** integration with OpenAI GPT-4o
 - 🔄 **Real-time streaming** responses  
 - 🛠 **Temporal expertise** - specialized knowledge of workflows, activities, and best practices
 - 🎨 **Modern UI** with Next.js and Tailwind CSS
 - 🔒 **Secure configuration** with environment variables
+- 👤 **Guest user support** - 3 free messages before registration
+- 📊 **Database persistence** with PostgreSQL
 
 **Quick Start:**
 ```bash
-# Start the AI chatbot reference (full-featured implementation)
-./run_chat_ui.sh
-
-# Or with Docker (if you prefer containerized deployment)
-cd ai-chatbot-reference && npm run dev
+# Navigate to the chatbot and start development
+cd vercel_ai_chatbot
+git checkout temporal-flow-customizations
+pnpm dev
 ```
 
-### AI SDK 5 Reference Implementation
+### AI Chatbot Setup & Customizations
 
-The `ai-chatbot-reference/` folder contains the official [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) as a reference implementation for learning advanced AI SDK 5 patterns.
+The `vercel_ai_chatbot/` folder contains the official [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) as a git submodule with two branches:
 
-**Why This Reference?**
-- 📚 **Learning resource** for AI SDK 5 best practices
-- 🔍 **Feature comparison** with our simplified implementation  
-- 🛠 **Advanced patterns** like tool calling, multi-modal support, and database integration
-- 💡 **Inspiration** for future enhancements
+- **`main`** - Clean upstream Vercel AI Chatbot reference
+- **`temporal-flow-customizations`** - Our customized version for Temporal workflows
 
-**Key Differences:**
-| Feature | AI Chatbot Reference | Traditional Chatbot |
-|---------|---------------------|---------------------|
-| **Purpose** | Temporal workflow assistance | General-purpose chatbot |
-| **Complexity** | Full-featured application | Basic implementation |
-| **Database** | PostgreSQL with persistence | Stateless |
-| **Authentication** | Complete user management | None |
-| **Tools** | Web search, code execution | None |
-| **File Support** | Images, documents, CSV | None |
+**Our Customizations:**
+- 🎯 **Enhanced guest experience** - 3 messages before registration requirement
+- � **OpenAI integration** - Switched from Grok to GPT-4o for better performance
+- 🎨 **Improved UX** - Better error handling and registration flow
+- � **Database separation** - Uses dedicated `chatbot` database
+- 🔧 **API enhancements** - Better streaming and error handling
 
-**Staying Synced:**
+**Staying Synced with Upstream:**
 ```bash
-# Update reference implementation
-git sync-chatbot
+# Sync with latest Vercel AI Chatbot updates
+cd vercel_ai_chatbot
+git checkout main
+git pull origin main
+git checkout temporal-flow-customizations
+git rebase main  # Apply our changes on top of latest upstream
 ```
 
-See [`ai-chatbot-reference/README-REFERENCE.md`](ai-chatbot-reference/README-REFERENCE.md) for detailed comparison and learning opportunities.
+**Key Benefits:**
+- ✅ **Conflict-free updates** from upstream Vercel repository
+- ✅ **Clear customization tracking** with dedicated branch
+- ✅ **Easy comparison** between vanilla and customized versions
+- ✅ **Maintainable workflow** for ongoing development
+
+See [`CUSTOMIZATIONS.md`](CUSTOMIZATIONS.md) for detailed documentation of all modifications and sync strategies.
 
 ## Documentation
 
