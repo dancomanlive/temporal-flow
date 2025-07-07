@@ -2,7 +2,14 @@
 
 # Run the AI Chatbot Reference implementation
 
-echo "🚀 Starting AI Chatbot Reference (AI SDK 5 Beta)..."
+echo "🚀 echo "   - AI SDK 5 Beta with OpenAI integration"
+echo "   - Advanced streaming responses"
+echo "   - Modern UI with Tailwind CSS"
+echo "   - Reference implementation for learning"
+echo ""
+echo "📖 See ai-chatbot-reference/README-REFERENCE.md for details"
+echo ""
+echo "🛑 To stop the server, press Ctrl+C or run: pkill -f 'next dev'"AI Chatbot Reference (AI SDK 5 Beta)..."
 
 # Check if we're in the right directory
 if [ ! -f "ai-chatbot-reference/package.json" ]; then

@@ -7,7 +7,7 @@ This folder contains the official [Vercel AI Chatbot](https://github.com/vercel/
 This reference implementation serves as:
 
 1. **Learning Resource**: See best practices for AI SDK 5 implementation
-2. **Feature Comparison**: Compare our Temporal-focused chat-ui with a full-featured chatbot
+2. **Feature Comparison**: Compare our AI chatbot implementation with a full-featured chatbot
 3. **Migration Guide**: Understand advanced AI SDK 5 patterns and features
 4. **Inspiration**: Discover new capabilities for future enhancements
 
@@ -36,7 +36,7 @@ This reference implementation serves as:
 
 ## Key Differences from Our Implementation
 
-| Feature | Our chat-ui | Vercel Reference |
+| Feature | Our Implementation | Vercel Reference |
 |---------|-------------|------------------|
 | **Focus** | Temporal workflow assistance | General-purpose chatbot |
 | **AI SDK Version** | 5.0 Beta | 5.0 Beta (same) |
@@ -81,7 +81,7 @@ git subtree pull --prefix=ai-chatbot-reference https://github.com/vercel/ai-chat
 - Study API testing patterns
 - Learn about chat flow testing
 
-## Potential Enhancements for Our Chat-UI
+## Potential Enhancements for Our Implementation
 
 Based on the reference implementation, we could consider:
 
@@ -133,14 +133,8 @@ pnpm db:migrate
 pnpm dev
 ```
 
-### Option 3: Use Our Simplified Chat-UI Instead
-For immediate AI chat functionality without database setup:
-```bash
-# Go back to our simplified implementation
-cd ../chat-ui
-npm run dev
-# Visit http://localhost:3000 - works immediately!
-```
+### Option 3: Use Alternative Implementation
+For immediate AI chat functionality without database setup, you can create a basic chat interface focused specifically on Temporal workflows. This would be a simplified version without persistence, authentication, or advanced features.
 
 ### Environment Variables Needed for Full Functionality
 

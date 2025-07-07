@@ -320,7 +320,7 @@ The Root Orchestrator provides a modern, configuration-driven approach to workfl
 
 ### Temporal Flow Chat Assistant
 
-The platform includes an AI-powered chat interface (`chat-ui/`) that helps users interact with Temporal workflows using natural language. Built with AI SDK 5 Beta and specialized for Temporal workflow orchestration.
+The platform includes an AI-powered chat interface (`ai-chatbot-reference/`) that helps users interact with Temporal workflows using natural language. Built with AI SDK 5 Beta and specialized for Temporal workflow orchestration.
 
 **Features:**
 - 🤖 **AI SDK 5 Beta** integration with OpenAI
@@ -331,14 +331,11 @@ The platform includes an AI-powered chat interface (`chat-ui/`) that helps users
 
 **Quick Start:**
 ```bash
-# Start the AI chatbot reference (recommended - includes all AI SDK 5 features)
+# Start the AI chatbot reference (full-featured implementation)
 ./run_chat_ui.sh
 
-# Or start the simple chat UI (basic implementation, works immediately)  
-./run_simple_chat_ui.sh
-
-# Or with Docker (simple version only)
-docker compose --profile ui up -d
+# Or with Docker (if you prefer containerized deployment)
+cd ai-chatbot-reference && npm run dev
 ```
 
 ### AI SDK 5 Reference Implementation
@@ -352,14 +349,14 @@ The `ai-chatbot-reference/` folder contains the official [Vercel AI Chatbot](htt
 - 💡 **Inspiration** for future enhancements
 
 **Key Differences:**
-| Feature | Our Chat-UI | Vercel Reference |
-|---------|-------------|------------------|
+| Feature | AI Chatbot Reference | Traditional Chatbot |
+|---------|---------------------|---------------------|
 | **Purpose** | Temporal workflow assistance | General-purpose chatbot |
-| **Complexity** | Simple, focused | Full-featured application |
-| **Database** | Stateless | PostgreSQL with persistence |
-| **Authentication** | None | Complete user management |
-| **Tools** | None | Web search, code execution |
-| **File Support** | None | Images, documents, CSV |
+| **Complexity** | Full-featured application | Basic implementation |
+| **Database** | PostgreSQL with persistence | Stateless |
+| **Authentication** | Complete user management | None |
+| **Tools** | Web search, code execution | None |
+| **File Support** | Images, documents, CSV | None |
 
 **Staying Synced:**
 ```bash
