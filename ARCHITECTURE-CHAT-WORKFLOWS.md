@@ -12,7 +12,7 @@ Your vision of making **every chat session a workflow** has been implemented wit
 │  (Browser)      │    │ (Next.js)       │    │ Workflow        │    │ Workflows       │
 │                 │    │                 │    │ (Long-running)  │    │ (Child)         │
 ├─────────────────┤    ├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ • User messages │───▶│ • HTTP requests │───▶│ • Signal:       │───▶│ • Incident      │
+│ • User messages │───▶│ • HTTP requests │───▶│ • Signal:       │───▶│ • Document      │
 │ • Real-time     │    │ • Session mgmt  │    │   receive_msg   │    │   Workflow      │
 │   streaming     │    │ • Rate limiting │    │ • Signal:       │    │ • Document      │
 │ • AI responses  │    │ • Guest users   │    │   trigger_wf    │    │   Processing    │
@@ -33,7 +33,7 @@ Your vision of making **every chat session a workflow** has been implemented wit
 └─────────────────┘    └─────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐
-│ Webhook Events  │───▶│ Incident /      │
+│ Webhook Events  │───▶│ Document /      │
 │                 │    │ Document        │
 ├─────────────────┤    │ Workflows       │
 │ • Monitoring    │    │                 │
@@ -57,7 +57,7 @@ User Message → Chat API → ChatSessionWorkflow → AI Activities → Domain W
      ↓             ↓              ↓                  ↓               ↓
   Browser     HTTP/Signals   Long-running      Async Tasks    Direct Child
                               Temporal          Activities      Workflows
-                             Workflow State                   (Incident, Doc, etc.)
+                             Workflow State                   (Document, Chat, etc.)
 ```
 
 ## 🚀 Core Components
@@ -147,13 +147,13 @@ chat-session-worker:
 
 ### 3. **Natural Workflow Triggering**
 ```
-User: "We have a critical incident!"
+User: "Please process this document!"
      ↓
-ChatSessionWorkflow detects "incident" keyword
+ChatSessionWorkflow detects "document" keyword
      ↓
-Automatically starts IncidentWorkflow as child
+Automatically starts DocumentProcessingWorkflow as child
      ↓
-User continues chatting while incident is processed
+User continues chatting while document is processed
 ```
 
 ### 4. **Enterprise Reliability**
@@ -183,9 +183,9 @@ User continues chatting while incident is processed
 2. Same flow as above, PLUS:
 3. Workflow detects "outage" keyword
 4. `trigger_workflow` signal processes event
-5. New `IncidentWorkflow` started directly as child
-6. Incident response workflow begins
-7. User can continue chatting while incident is processed
+5. New `DocumentProcessingWorkflow` started directly as child
+6. Document processing workflow begins
+7. User can continue chatting while document is processed
 8. Workflow status updates available via queries
 
 ## 📊 Monitoring & Observability

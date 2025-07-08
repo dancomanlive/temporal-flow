@@ -1,33 +1,6 @@
 """Test the new dataclass-based workflow inputs."""
 
-from src.domain.workflow_inputs import IncidentWorkflowInput, DocumentProcessingInput
-
-
-def test_incident_workflow_input_creation():
-    """Test creating IncidentWorkflowInput with various parameters."""
-    # Test with full parameters
-    input_full = IncidentWorkflowInput(
-        incident_id="inc-123",
-        source="monitoring",
-        severity="high",
-        message="Critical system failure",
-        event_type="incident",
-        timestamp="2025-07-07T10:00:00Z",
-        additional_context={"region": "us-east-1"}
-    )
-    
-    assert input_full.incident_id == "inc-123"
-    assert input_full.source == "monitoring"
-    assert input_full.severity == "high"
-    assert input_full.message == "Critical system failure"
-    assert input_full.event_type == "incident"
-    assert input_full.additional_context["region"] == "us-east-1"
-    
-    # Test with minimal parameters (all optional)
-    input_minimal = IncidentWorkflowInput()
-    assert input_minimal.incident_id is None
-    assert input_minimal.source is None
-    assert input_minimal.additional_context is None
+from src.domain.workflow_inputs import DocumentProcessingInput
 
 
 def test_document_processing_input_creation():
@@ -83,18 +56,19 @@ def test_document_processing_input_creation():
 def test_backwards_compatibility():
     """Test that the dataclasses support backwards compatibility."""
     # Test that we can create instances with partial data
-    input_partial = IncidentWorkflowInput(
-        message="Alert detected",
+    input_partial = DocumentProcessingInput(
+        document_uri="https://example.com/legacy.pdf",
+        source="legacy_system",
+        event_type="document-uploaded",
         additional_context={"legacy_data": True}
     )
     
-    assert input_partial.message == "Alert detected"
-    assert input_partial.incident_id is None
+    assert input_partial.document_uri == "https://example.com/legacy.pdf"
+    assert input_partial.source == "legacy_system"
     assert input_partial.additional_context["legacy_data"] is True
 
 
 if __name__ == "__main__":
-    test_incident_workflow_input_creation()
     test_document_processing_input_creation()
     test_backwards_compatibility()
     print("✅ All workflow input tests passed!")

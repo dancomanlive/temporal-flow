@@ -45,7 +45,7 @@ async def test_chat_session_workflow():
         print("💬 Sending test message...")
         await handle.signal("receive_message", {
             "messageId": "msg-001",
-            "content": "Hello! Can you help me with an incident?",
+            "content": "Hello! Can you help me process a document?",
             "role": "user",
             "timestamp": datetime.now().isoformat(),
             "userId": "test-user-123"
@@ -69,7 +69,7 @@ async def test_chat_session_workflow():
         # Test workflow triggering
         print("🚀 Testing workflow trigger...")
         await handle.signal("trigger_workflow", {
-            "eventType": "incident",
+            "eventType": "document-added",
             "message": "Critical system failure detected",
             "priority": "high",
             "metadata": {

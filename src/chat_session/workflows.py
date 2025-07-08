@@ -111,28 +111,7 @@ class ChatSessionWorkflow:
         
         try:
             # Directly trigger domain workflows based on event type
-            if event_type == "incident":
-                # Start incident workflow directly
-                await workflow.execute_child_workflow(
-                    "IncidentWorkflow",
-                    args=[{
-                        "incident_id": workflow_event.get("incident_id", f"INC-{uuid.uuid4()}"),
-                        "source": "chat",
-                        "severity": workflow_event.get("severity", "medium"),
-                        "message": workflow_event.get("message", "Incident reported via chat"),
-                        "event_type": event_type,
-                        "timestamp": workflow_event.get("timestamp"),
-                        "additional_context": {
-                            "chatId": self._state.session_id if self._state else None,
-                            "userId": self._state.user_id if self._state else None,
-                            "metadata": workflow_event.get('metadata', {})
-                        }
-                    }],
-                    id=workflow_id,
-                    task_queue="incident_workflow-queue"
-                )
-                
-            elif event_type in ["document-added", "document-uploaded"]:
+            if event_type in ["document-added", "document-uploaded"]:
                 # Start document processing workflow directly
                 await workflow.execute_child_workflow(
                     "DocumentProcessingWorkflow",
@@ -338,7 +317,7 @@ class ChatSessionWorkflow:
         try:
             # Check if message should trigger workflows
             if message.role == 'user':
-                workflow_keywords = ['incident', 'document', 'process', 'workflow', 'automation']
+                workflow_keywords = ['document', 'process', 'workflow', 'automation']
                 content_lower = message.content.lower()
                 
                 for keyword in workflow_keywords:

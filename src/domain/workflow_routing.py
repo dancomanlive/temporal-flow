@@ -81,7 +81,6 @@ class WorkflowRouter:
 # Default configuration for the system
 DEFAULT_ROUTING_CONFIG = EventRoutingConfig(
     event_type_mappings={
-        "incident": "incident_workflow",
         "document-added": "document_processing_workflow",
         "document-uploaded": "document_processing_workflow",
         "data-processing": "data_processing_workflow",
@@ -90,17 +89,9 @@ DEFAULT_ROUTING_CONFIG = EventRoutingConfig(
         "s3": "document_processing_workflow", 
         "azure-blob": "document_processing_workflow",
         "sharepoint": "document_processing_workflow",
-        "monitoring": "incident_workflow",
     },
-    default_workflow="incident_workflow",
+    default_workflow="document_processing_workflow",
     workflows={
-        "incident_workflow": WorkflowConfig(
-            workflow_name="incident_workflow",
-            workflow_class="IncidentWorkflow", 
-            task_queue="incident_workflow-queue",
-            description="Handles system incidents and alerts",
-            enabled=True
-        ),
         "document_processing_workflow": WorkflowConfig(
             workflow_name="document_processing_workflow",
             workflow_class="DocumentProcessingWorkflow",

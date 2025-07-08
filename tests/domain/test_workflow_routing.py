@@ -20,15 +20,15 @@ class TestWorkflowRouter:
         router = WorkflowRouter(DEFAULT_ROUTING_CONFIG)
         
         event = {
-            "eventType": "incident",
+            "eventType": "document-added",
             "source": "monitoring"
         }
         
         result = router.route_event(event)
         
         assert result is not None
-        assert result.workflow_name == "incident_workflow"
-        assert result.task_queue == "incident_workflow-queue"
+        assert result.workflow_name == "document_processing_workflow"
+        assert result.task_queue == "document_processing-queue"
         assert result.enabled is True
 
     def test_route_by_source(self):
@@ -66,7 +66,7 @@ class TestWorkflowRouter:
         result = router.route_event(event)
         
         assert result is not None
-        assert result.workflow_name == "incident_workflow"  # Default workflow
+        assert result.workflow_name == "document_processing_workflow"  # Default workflow
 
     def test_route_case_insensitive(self):
         """
@@ -77,14 +77,14 @@ class TestWorkflowRouter:
         router = WorkflowRouter(DEFAULT_ROUTING_CONFIG)
         
         event = {
-            "eventType": "INCIDENT",
+            "eventType": "DOCUMENT-ADDED",
             "source": "MONITORING"
         }
         
         result = router.route_event(event)
         
         assert result is not None
-        assert result.workflow_name == "incident_workflow"
+        assert result.workflow_name == "document_processing_workflow"
 
     def test_route_no_match_no_default(self):
         """
@@ -222,7 +222,7 @@ class TestWorkflowRouter:
         result = router.route_event(event)
         
         assert result is not None
-        assert result.workflow_name == "incident_workflow"  # Default workflow
+        assert result.workflow_name == "document_processing_workflow"  # Default workflow
 
 
 class TestWorkflowConfig:
@@ -309,9 +309,7 @@ class TestDefaultConfig:
         config = DEFAULT_ROUTING_CONFIG
         
         # Check event type mappings
-        assert "incident" in config.event_type_mappings
         assert "document-added" in config.event_type_mappings
-        assert config.event_type_mappings["incident"] == "incident_workflow"
         assert config.event_type_mappings["document-added"] == "document_processing_workflow"
         
         # Check source mappings
@@ -320,12 +318,11 @@ class TestDefaultConfig:
         assert config.source_mappings["s3"] == "document_processing_workflow"
         
         # Check default workflow
-        assert config.default_workflow == "incident_workflow"
+        assert config.default_workflow == "document_processing_workflow"
         
         # Check workflows
-        assert "incident_workflow" in config.workflows
         assert "document_processing_workflow" in config.workflows
-        assert config.workflows["incident_workflow"].enabled is True
+        assert config.workflows["document_processing_workflow"].enabled is True
 
     def test_default_config_router_integration(self):
         """
@@ -334,11 +331,6 @@ class TestDefaultConfig:
         THEN it should route events correctly.
         """
         router = WorkflowRouter(DEFAULT_ROUTING_CONFIG)
-        
-        # Test incident routing
-        incident_event = {"eventType": "incident"}
-        result = router.route_event(incident_event)
-        assert result.workflow_name == "incident_workflow"
         
         # Test document routing
         doc_event = {"eventType": "document-added"}

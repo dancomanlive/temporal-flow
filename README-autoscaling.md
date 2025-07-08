@@ -35,7 +35,7 @@
   apiVersion: apps/v1
   kind: Deployment
   metadata:
-    name: incident-worker
+    name: document-processing-worker
   spec:
     replicas: 3  # Number of worker pods
     ...
@@ -45,14 +45,14 @@
 ### In Docker Compose (for local/dev)
 - In your `docker-compose.yml`, set the `replicas` field (if using Compose v3+ with Swarm):
   ```yaml
-  incident-worker:
+  document-processing-worker:
     ...
     deploy:
       replicas: 3
   ```
 - Or, run multiple containers manually:
   ```sh
-  docker-compose up --scale incident-worker=3
+  docker-compose up --scale document-processing-worker=3
   ```
 
 Increasing the number of replicas means more worker processes will poll the task queue and process tasks in parallel, improving throughput and resilience.

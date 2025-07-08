@@ -43,7 +43,7 @@ INFO:__main__:For production, set WEBHOOK_SECRET environment variable
 ```bash
 $ docker compose ps
 NAME                                              STATUS
-temporal_flow_engine-incident-worker-1           Up 10 seconds (healthy)
+temporal_flow_engine-document-processing-worker-1  Up 10 seconds (healthy)
 temporal_flow_engine-postgresql-1                Up 16 seconds (healthy)
 temporal_flow_engine-root-orchestrator-worker-1  Up 10 seconds (healthy)
 temporal_flow_engine-temporal-1                  Up 10 seconds

@@ -66,7 +66,7 @@ graph TB
     %% Temporal Infrastructure
     TC --> TS[Temporal Server]
     TS --> RW[Root Orchestrator Worker]
-    TS --> IW[Incident Workflow Worker]
+    TS --> DPW[Document Processing Worker]
     
     %% Root Orchestrator Components
     RW --> ROW[Root Orchestrator Workflow]
@@ -109,9 +109,9 @@ graph TB
     AZA --> AZB[Azure Blob Storage]
     
     %% Child Workflows
-    ROW --> |starts child workflows| IWF[Incident Workflow]
-    IWF --> IA[Incident Activities]
-    IA --> |delegates to| IDS[Incident Domain Services]
+    ROW --> |starts child workflows| DPW[Document Processing Workflow]
+    DPW --> DA[Document Processing Activities]
+    DA --> |delegates to| DDS[Document Domain Services]
     IDS --> DP
     
     %% Styling

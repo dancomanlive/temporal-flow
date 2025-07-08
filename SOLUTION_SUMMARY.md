@@ -1,7 +1,7 @@
 # Temporal Connection Retry Solution - Implementation Complete
 
 ## Problem Solved
-Fixed the Temporal connection error where `incident_workflow` worker was failing to connect to the Temporal server with "Connection refused" error (RuntimeError: Failed client connect: Server connection error: tonic::transport::Error).
+Fixed the Temporal connection error where workers were failing to connect to the Temporal server with "Connection refused" error (RuntimeError: Failed client connect: Server connection error: tonic::transport::Error).
 
 ## Root Cause
 Docker `depends_on` only waits for containers to start, not for services to be ready. Workers were attempting to connect before the Temporal server was fully initialized.
@@ -26,8 +26,7 @@ Docker `depends_on` only waits for containers to start, not for services to be r
 
 ### 3. Updated Worker Files
 Modified all worker entry points to use the retry utility:
-- `src/incident_workflow/run_worker.py`
-- `src/incident_workflow/run_worker.py`
+- `src/document_processing/run_worker.py`
 - `src/chat_session/run_worker.py`
 - `src/listeners/s3_event_listener.py`
 - `src/listeners/azure_blob_listener.py`
@@ -67,7 +66,7 @@ docker compose build --no-cache
 docker compose up -d
 
 # Monitor logs
-docker compose logs -f incident-worker
+docker compose logs -f document-processing-worker
 docker compose logs -f root-orchestrator-worker
 ```
 

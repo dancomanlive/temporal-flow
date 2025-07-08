@@ -52,8 +52,7 @@ python wait_for_temporal.py --health-check
 ### 3. Updated Worker Files
 
 All worker files now use the retry utility:
-- `src/incident_workflow/run_worker.py`
-- `src/incident_workflow/run_worker.py`
+- `src/document_processing/run_worker.py`
 - `src/chat_session/run_worker.py`
 - `src/listeners/s3_event_listener.py`
 - `src/listeners/azure_blob_listener.py`
@@ -68,9 +67,9 @@ Updated `docker-compose.yml` with:
 - Proper startup timing
 
 ```yaml
-incident-worker:
+document-processing-worker:
   # ... other config ...
-  command: ["sh", "-c", "python wait_for_temporal.py && python -m src.incident_workflow.run_worker"]
+  command: ["sh", "-c", "python wait_for_temporal.py && python -m src.document_processing.run_worker"]
   restart: unless-stopped
   healthcheck:
     test: ["CMD", "python", "wait_for_temporal.py", "--health-check"]

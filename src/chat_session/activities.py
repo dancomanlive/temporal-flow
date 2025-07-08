@@ -114,7 +114,6 @@ class ChatSessionActivities:
         
         # Simple keyword-based analysis (could be enhanced with ML/AI)
         workflow_keywords = {
-            'incident': ['incident', 'outage', 'down', 'error', 'critical', 'emergency', 'alert'],
             'document': ['document', 'file', 'upload', 'process', 'analyze', 'pdf', 'doc'],
             'data': ['data', 'pipeline', 'etl', 'process', 'batch', 'job', 'analytics'],
             'automation': ['automate', 'workflow', 'trigger', 'run', 'execute', 'schedule']

@@ -12,7 +12,6 @@ The Temporal Flow Engine uses an event-driven architecture where external events
 - Each workflow handles its own domain logic
 
 ### 2. **Domain-Specific Workflows**
-- `IncidentWorkflow` - Handles system incidents and alerts
 - `DocumentProcessingWorkflow` - Processes documents (chunking, embedding, indexing)
 - `ChatSessionWorkflow` - Manages chat conversations and state
 
@@ -96,7 +95,7 @@ class DocumentProcessingActivities:
 # Fast domain tests - no mocking needed
 def test_event_validation():
     service = EventValidationService()
-    result = service.validate_event({"eventType": "incident"})
+    result = service.validate_event({"eventType": "document"})
     assert result.is_valid is True
 
 # Minimal activity tests

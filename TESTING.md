@@ -32,11 +32,11 @@ tests/
 │   ├── __init__.py
 │   ├── test_workflow_inputs.py
 │   └── test_workflow_routing.py
-└── incident_workflow/
+└── document_processing/
     ├── __init__.py
-    └── test_activities.py
-```
-    └── test_activities.py
+    ├── test_services.py
+    ├── test_activities.py
+    └── test_workflows.py
 ```
 
 ## Running Tests
@@ -60,8 +60,6 @@ pip install pytest pytest-asyncio
 ### Domain Tests (`tests/domain/`)
 
 #### Workflow Input Tests (`test_workflow_inputs.py`)
-- ✅ IncidentWorkflowInput creation with all parameters
-- ✅ IncidentWorkflowInput creation with minimal parameters
 - ✅ DocumentProcessingInput creation with all parameters  
 - ✅ DocumentProcessingInput creation with minimal parameters
 - ✅ Backwards compatibility support
@@ -79,15 +77,6 @@ pip install pytest pytest-asyncio
 - ✅ Disabled workflow handling
 - ✅ Nonexistent workflow handling
 
-### Incident Workflow Tests (`tests/incident_workflow/test_activities.py`)
-
-#### All Activities Tested
-- ✅ `detect_incident`: with and without context
-- ✅ `analyze_logs`: with and without incident_id
-- ✅ `send_notification`: various summary scenarios
-- ✅ `mark_complete`: completion handling
-- ✅ Full workflow simulation: end-to-end activity chain
-
 ## Key Testing Patterns
 
 ### 1. Mocking File System Operations
@@ -99,7 +88,7 @@ async def test_get_available_workflows_with_mocked_fs(
     self, mock_listdir: MagicMock, mock_isdir: MagicMock, mock_exists: MagicMock
 ):
     # Setup mocks to simulate filesystem
-    mock_listdir.return_value = ["incident_workflow", "document_workflow"]
+    mock_listdir.return_value = ["document_processing", "chat_session"]
     # ... test logic
 ```
 
@@ -115,12 +104,12 @@ async def test_choose_workflow_not_available(self):
 
 ### 3. Contract-Based Testing
 ```python
-async def test_detect_incident(self):
-    result = await activities.detect_incident(context)
+async def test_document_processing_activity(self):
+    result = await activities.validate_document(context)
     
     # Test the contract: these keys must exist
-    assert "incident_id" in result
-    assert "severity" in result
+    assert "success" in result
+    assert "errors" in result
     # Don't test specific values unless they're part of the contract
 ```
 

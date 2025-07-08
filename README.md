@@ -17,8 +17,8 @@ The Temporal Flow Engine is a configurable, event-driven workflow orchestration 
 ```
 External Sources → Event Listeners → Domain Workflows (Direct)
      ↓                 ↓                   ↓                    ↓
-S3, Azure Blob,    SQS, Service Bus,  Direct Domain       Incident, Document
-SharePoint, etc.   HTTP Webhooks       Workflows          Processing, etc.
+S3, Azure Blob,    SQS, Service Bus,  Direct Domain       Document Processing,
+SharePoint, etc.   HTTP Webhooks       Workflows          Chat Sessions, etc.
 ```
 
 ### Key Components
@@ -26,7 +26,7 @@ SharePoint, etc.   HTTP Webhooks       Workflows          Processing, etc.
 - **Chat Session Workflows**: Long-running workflows that manage chat conversations and trigger domain workflows
 - **Event Listeners**: External services that listen for events from various sources and directly trigger appropriate domain workflows
 - **Ports & Adapters**: Abstract interfaces and concrete implementations following hexagonal architecture
-- **Domain Workflows**: Business-specific workflows (e.g., incident management, document processing)
+- **Domain Workflows**: Business-specific workflows (e.g., document processing, chat sessions)
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ docker compose --profile listeners up -d
 - Temporal server & UI
 - PostgreSQL database  
 - Chat session worker
-- Incident workflow worker
+- Document processing worker
 
 **Event Listeners (Optional):**
 - S3 event listener (requires AWS SQS configuration)
@@ -71,17 +71,18 @@ open http://localhost:8080
 
 ### 3. Test Direct Domain Workflow Triggering
 
-Start an incident workflow directly:
+Start a document processing workflow directly:
 ```bash
 temporal workflow start \
-  --task-queue incident_workflow-queue \
-  --type IncidentWorkflow \
-  --workflow-id test-incident-1 \
+  --task-queue document_processing-queue \
+  --type DocumentProcessingWorkflow \
+  --workflow-id test-document-1 \
   --input '{
-    "incident_id": "INC-123",
-    "source": "manual",
-    "severity": "high", 
-    "message": "Test incident"
+    "document_uri": "s3://test-bucket/sample.pdf",
+    "source": "s3",
+    "event_type": "ObjectCreated",
+    "bucket": "test-bucket",
+    "key": "sample.pdf"
   }'
 ```
   }'
@@ -129,7 +130,7 @@ Each chat conversation is now powered by a **long-running Temporal workflow** th
 **Key Benefits:**
 - 💾 **Stateful conversations** - Remember full context and history
 - ⚡ **Event-driven messaging** - Messages become Temporal signals
-- 🔗 **Workflow integration** - "We have an incident" → automatically triggers IncidentWorkflow  
+- 🔗 **Workflow integration** - "Process this document" → automatically triggers DocumentProcessingWorkflow  
 - 🛡 **Enterprise reliability** - Timeouts, retries, and failure handling
 - 📊 **Full observability** - Monitor chat sessions in Temporal Web UI
 
@@ -156,7 +157,6 @@ Validate everything works with the test suite:
 The Root Orchestrator routes events based on configuration in `src/domain/workflow_routing.py`:
 
 #### Event Type Mappings
-- `incident` → `incident_workflow`
 - `document-added` → `document_processing_workflow`
 - `document-uploaded` → `document_processing_workflow`
 - `data-processing` → `data_processing_workflow`
@@ -165,7 +165,6 @@ The Root Orchestrator routes events based on configuration in `src/domain/workfl
 - `s3` → `document_processing_workflow`
 - `azure-blob` → `document_processing_workflow`
 - `sharepoint` → `document_processing_workflow`
-- `monitoring` → `incident_workflow`
 
 ### Environment Variables
 
@@ -327,7 +326,7 @@ docker compose --profile test run --rm test-runner
 # Run specific test suites
 docker compose --profile test run --rm test-runner python -m pytest tests/domain/ -v
 docker compose --profile test run --rm test-runner python -m pytest tests/domain/ -v
-docker compose --profile test run --rm test-runner python -m pytest tests/incident_workflow/ -v
+docker compose --profile test run --rm test-runner python -m pytest tests/document_processing/ -v
 
 # Run tests with detailed coverage report
 docker compose --profile test run --rm test-runner python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing
@@ -353,8 +352,8 @@ For rapid development iterations, you can also run tests locally:
 pytest
 pytest tests/domain/
 pytest tests/domain/
-pytest tests/incident_workflow/
-pytest tests/incident_workflow/
+pytest tests/document_processing/
+pytest tests/document_processing/
 ```
 
 ## Event-Driven Architecture

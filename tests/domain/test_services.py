@@ -24,18 +24,18 @@ class TestEventValidationService:
         service = EventValidationService()
         
         event = {
-            "eventType": "incident",
+            "eventType": "document-added",
             "source": "monitoring",
-            "message": "Test incident"
+            "message": "Test document"
         }
         
         result = service.validate_event(event)
         
         assert result.is_valid is True
         assert result.errors == []
-        assert result.normalized_event["eventType"] == "incident"
+        assert result.normalized_event["eventType"] == "document-added"
         assert result.normalized_event["source"] == "monitoring"
-        assert result.normalized_event["message"] == "Test incident"
+        assert result.normalized_event["message"] == "Test document"
     
     def test_validate_missing_event_type(self):
         """
@@ -74,21 +74,21 @@ class TestEventRoutingService:
     def test_route_by_event_type(self):
         """
         GIVEN a routing service with default config
-        WHEN routing an incident event
-        THEN it should route to incident workflow.
+        WHEN routing a document event
+        THEN it should route to document processing workflow.
         """
         service = EventRoutingService(DEFAULT_ROUTING_CONFIG)
         
         event = {
-            "eventType": "incident",
+            "eventType": "document-added",
             "source": "monitoring"
         }
         
         result = service.route_event(event)
         
         assert result.workflow_config is not None
-        assert result.workflow_config.workflow_name == "incident_workflow"
-        assert "Routed by eventType 'incident'" in result.routing_decision
+        assert result.workflow_config.workflow_name == "document_processing_workflow"
+        assert "Routed by eventType 'document-added'" in result.routing_decision
         assert result.confidence == 1.0
     
     def test_route_by_source_fallback(self):
@@ -149,9 +149,9 @@ class TestOrchestratorDomainService:
         service = OrchestratorDomainService(DEFAULT_ROUTING_CONFIG)
         
         event = {
-            "eventType": "incident",
+            "eventType": "document-added",
             "source": "monitoring",
-            "message": "System down"
+            "message": "Document uploaded"
         }
         
         validation_result, routing_result = service.process_event_for_routing(event)
@@ -163,7 +163,7 @@ class TestOrchestratorDomainService:
         # Routing should succeed
         assert routing_result is not None
         assert routing_result.workflow_config is not None
-        assert routing_result.workflow_config.workflow_name == "incident_workflow"
+        assert routing_result.workflow_config.workflow_name == "document_processing_workflow"
     
     def test_process_invalid_event(self):
         """

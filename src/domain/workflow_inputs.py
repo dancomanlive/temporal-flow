@@ -5,27 +5,6 @@ from typing import Dict, Any, Optional
 
 
 @dataclass
-class IncidentWorkflowInput:
-    """Input for the incident workflow.
-    
-    Using a dataclass allows for backwards-compatible evolution by adding
-    optional fields without changing the function signature.
-    """
-    # Core incident information
-    incident_id: Optional[str] = None
-    source: Optional[str] = None
-    severity: Optional[str] = None
-    message: Optional[str] = None
-    
-    # Event metadata
-    event_type: Optional[str] = None
-    timestamp: Optional[str] = None
-    
-    # Additional context (for backwards compatibility)
-    additional_context: Optional[Dict[str, Any]] = None
-
-
-@dataclass
 class DocumentProcessingInput:
     """Input for document processing workflow.
     
