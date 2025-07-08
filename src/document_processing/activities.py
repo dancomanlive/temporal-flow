@@ -321,10 +321,11 @@ class DocumentProcessingActivities:
             stored_ids = []
             
             for i, (chunk, embedding, metadata) in enumerate(zip(chunks, embeddings, chunk_metadata)):
-                # Generate storage ID
-                import uuid
-                chunk_id = f"{doc_input.source}_{doc_input.event_type}_{uuid.uuid4().hex[:8]}_{i}"
-                
+                # Generate deterministic storage ID (no uuid)
+                # Use a hash of chunk content and index for uniqueness
+                import hashlib
+                chunk_hash = hashlib.md5((chunk + str(i)).encode()).hexdigest()[:8]
+                chunk_id = f"{doc_input.source}_{doc_input.event_type}_{chunk_hash}_{i}"
                 # Log storage (in production, actually store to vector DB)
                 activity.logger.debug(f"Storing chunk {chunk_id}: {len(chunk)} chars, {len(embedding)} dimensions")
                 stored_ids.append(chunk_id)

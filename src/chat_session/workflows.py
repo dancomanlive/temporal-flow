@@ -5,7 +5,6 @@ from typing import Dict, Any, List, Optional
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
 from dataclasses import dataclass
-import uuid
 
 
 @dataclass
@@ -67,11 +66,17 @@ class ChatSessionWorkflow:
         Args:
             message_data: Message data containing content, role, etc.
         """
-        workflow.logger.info(f"Received message: {message_data.get('messageId')}")
+        # Use provided messageId, or fallback to deterministic ID
+        message_id = message_data.get('messageId')
+        if not message_id:
+            # Fallback: deterministic ID based on session and message count
+            session_id = self._state.session_id if self._state else "unknown"
+            message_id = f"{session_id}-msg-{len(self._message_history) + 1}"
+        workflow.logger.info(f"Received message: {message_id}")
         
         # Create ChatMessage object
         message = ChatMessage(
-            message_id=message_data.get('messageId', str(uuid.uuid4())),
+            message_id=message_id,
             content=message_data.get('content', ''),
             role=message_data.get('role', 'user'),
             timestamp=message_data.get('timestamp', ''),
@@ -86,7 +91,7 @@ class ChatSessionWorkflow:
         if self._state:
             self._state.message_count += 1
             self._state.last_activity = message.timestamp
-            
+        
         # Queue for AI processing
         self._ai_processing_queue.append(message)
         
@@ -99,15 +104,17 @@ class ChatSessionWorkflow:
         Args:
             workflow_event: Event data containing workflow type and parameters
         """
-        if not workflow_event.get('eventType'):
-            workflow.logger.warning("No eventType in workflow_event, skipping trigger")
+        # Support both 'eventType' and 'event_type' for compatibility
+        event_type = workflow_event.get('eventType') or workflow_event.get('event_type')
+        if not event_type:
+            workflow.logger.warning("No eventType/event_type in workflow_event, skipping trigger")
             return
-            
-        event_type = workflow_event['eventType']
         workflow.logger.info(f"Triggering workflow for event type: {event_type}")
-        
-        # Generate workflow ID for the triggered workflow
-        workflow_id = f"chat-triggered-{event_type}-{uuid.uuid4()}"
+        # Generate deterministic workflow ID for the triggered workflow
+        # Use session_id and event_type and message count for uniqueness
+        session_id = self._state.session_id if self._state else "unknown"
+        message_count = self._state.message_count if self._state else 0
+        workflow_id = f"chat-triggered-{event_type}-{session_id}-{message_count}"
         
         try:
             # Directly trigger domain workflows based on event type
@@ -323,18 +330,27 @@ class ChatSessionWorkflow:
                 for keyword in workflow_keywords:
                     if keyword in content_lower:
                         workflow.logger.info(f"Detected workflow keyword '{keyword}' in message")
-                        
-                        # This would typically analyze the message more thoroughly
-                        # For now, we'll create a simple event
-                        await self.trigger_workflow({
-                            'eventType': 'user-request',
-                            'message': message.content,
-                            'priority': 'normal',
-                            'metadata': {
-                                'messageId': message.message_id,
-                                'detectedKeyword': keyword
-                            }
-                        })
+                        # If the keyword is 'document', trigger document-added event
+                        if keyword == 'document':
+                            await self.trigger_workflow({
+                                'eventType': 'document-added',
+                                'message': message.content,
+                                'priority': 'normal',
+                                'metadata': {
+                                    'messageId': message.message_id,
+                                    'detectedKeyword': keyword
+                                }
+                            })
+                        else:
+                            await self.trigger_workflow({
+                                'eventType': 'user-request',
+                                'message': message.content,
+                                'priority': 'normal',
+                                'metadata': {
+                                    'messageId': message.message_id,
+                                    'detectedKeyword': keyword
+                                }
+                            })
                         break
             
             # Here you would integrate with the AI system to generate responses
