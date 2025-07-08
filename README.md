@@ -4,19 +4,27 @@
 
 The Temporal Flow Engine is a configurable, event-driven workflow orchestration platform built with Temporal.io. It implements a Hexagonal Architecture pattern that provides clean separation between core business logic and external adapters, making it easy to integrate with various data sources and event systems.
 
+## 🚀 Quick Navigation
+
+- **[Start Temporal Workflows](#quick-start)** - Get the core platform running in minutes
+- **[🤖 AI Chat Assistant](#-ai-chat-assistant---quick-access)** - Interactive AI chatbot for workflow management (requires `temporal-flow-customizations` branch)
+- **[Architecture Overview](#architecture)** - System design and components
+- **[Event Listeners](#event-listeners)** - External integrations (S3, Azure, webhooks)
+- **[Configuration](#configuration)** - Environment setup and customization
+
 ## Architecture
 
 ```
-External Sources → Event Listeners → Root Orchestrator → Domain Workflows
+External Sources → Event Listeners → Domain Workflows (Direct)
      ↓                 ↓                   ↓                    ↓
-S3, Azure Blob,    SQS, Service Bus,  Temporal Signals    Incident, Document
-SharePoint, etc.   HTTP Webhooks       & Activities        Processing, etc.
+S3, Azure Blob,    SQS, Service Bus,  Direct Domain       Incident, Document
+SharePoint, etc.   HTTP Webhooks       Workflows          Processing, etc.
 ```
 
 ### Key Components
 
-- **Root Orchestrator**: Configuration-driven workflow router that validates events and routes them to appropriate domain workflows
-- **Event Listeners**: External services that listen for events from various sources and trigger Temporal workflows
+- **Chat Session Workflows**: Long-running workflows that manage chat conversations and trigger domain workflows
+- **Event Listeners**: External services that listen for events from various sources and directly trigger appropriate domain workflows
 - **Ports & Adapters**: Abstract interfaces and concrete implementations following hexagonal architecture
 - **Domain Workflows**: Business-specific workflows (e.g., incident management, document processing)
 
@@ -38,7 +46,7 @@ docker compose --profile listeners up -d
 **Core Services Include:**
 - Temporal server & UI
 - PostgreSQL database  
-- Root orchestrator worker
+- Chat session worker
 - Incident workflow worker
 
 **Event Listeners (Optional):**
@@ -46,46 +54,88 @@ docker compose --profile listeners up -d
 - Azure blob listener (requires Azure Service Bus configuration)  
 - Webhook listener (works without configuration, but WEBHOOK_SECRET recommended)
 
-### 2. Test the Root Orchestrator
+### 2. Test Chat Session Workflows
 
-Start a workflow:
+Test the revolutionary chat workflow system:
+
+```bash
+# Run automated tests
+python test_chat_workflows.py
+
+# Or test in browser with chat UI
+open http://localhost:3001
+
+# Monitor workflows in Temporal UI
+open http://localhost:8080
+```
+
+### 3. Test Direct Domain Workflow Triggering
+
+Start an incident workflow directly:
 ```bash
 temporal workflow start \
-  --task-queue root_orchestrator-queue \
-  --type RootOrchestratorWorkflow \
-  --workflow-id test-orchestrator-1 \
-  --input '{}'
-```
-
-Send an incident event:
-```bash
-temporal workflow signal \
-  --workflow-id test-orchestrator-1 \
-  --name trigger \
+  --task-queue incident_workflow-queue \
+  --type IncidentWorkflow \
+  --workflow-id test-incident-1 \
   --input '{
-    "eventType": "incident",
-    "source": "monitoring",
-    "message": "Critical system failure detected"
+    "incident_id": "INC-123",
+    "source": "manual",
+    "severity": "high", 
+    "message": "Test incident"
   }'
 ```
-
-Send a document processing event:
-```bash
-temporal workflow signal \
-  --workflow-id test-orchestrator-1 \
-  --name trigger \
-  --input '{
-    "eventType": "document-added",
-    "source": "s3",
-    "bucket": "my-documents",
-    "key": "uploads/document.pdf",
-    "documentUri": "s3://my-documents/uploads/document.pdf"
   }'
 ```
 
 ### 3. Monitor Workflows
 
 Open the Temporal Web UI: [http://localhost:8080/namespaces/default/workflows](http://localhost:8080/namespaces/default/workflows)
+
+## 🤖 AI Chat Assistant - Quick Access
+
+**Want to interact with workflows using AI? We have a custom AI chatbot with workflow integration!**
+
+```bash
+# Navigate to the AI chatbot
+cd vercel_ai_chatbot
+
+# ⚠️ IMPORTANT: Switch to the customizations branch
+git checkout temporal-flow-customizations
+
+# Install dependencies and start
+pnpm install
+pnpm dev
+```
+
+**Visit:** [http://localhost:3001](http://localhost:3001)
+
+**Features:**
+- 🎯 **Guest users get 3 free messages** before registration
+- 🤖 **GPT-4o integration** for Temporal workflow expertise  
+- 🔄 **Real-time streaming** responses
+- 🛠 **Temporal-specific knowledge** and tools
+- 🚀 **NEW: Chat Session Workflows** - Each chat is now a long-running Temporal workflow!
+
+### 🚀 Chat Session Workflows (NEW!)
+
+Each chat conversation is now powered by a **long-running Temporal workflow** that:
+
+- **Persists conversation state** across all messages
+- **Receives messages as signals** for reliable, asynchronous processing  
+- **Triggers workflows naturally** from conversation content
+- **Manages user rate limiting** at the workflow level
+- **Integrates seamlessly** with the broader orchestration platform
+
+**Key Benefits:**
+- 💾 **Stateful conversations** - Remember full context and history
+- ⚡ **Event-driven messaging** - Messages become Temporal signals
+- 🔗 **Workflow integration** - "We have an incident" → automatically triggers IncidentWorkflow  
+- 🛡 **Enterprise reliability** - Timeouts, retries, and failure handling
+- 📊 **Full observability** - Monitor chat sessions in Temporal Web UI
+
+See [Chat Session Workflows Documentation](README-chat-session-workflows.md) for complete architecture details.
+
+> **Note:** The AI chatbot is in the `vercel_ai_chatbot/` subdirectory and requires the `temporal-flow-customizations` branch for our enhanced features (guest user support, registration fixes, workflow integration, etc.).
 
 ### 4. Run Tests (Optional)
 
@@ -276,7 +326,7 @@ docker compose --profile test run --rm test-runner
 
 # Run specific test suites
 docker compose --profile test run --rm test-runner python -m pytest tests/domain/ -v
-docker compose --profile test run --rm test-runner python -m pytest tests/root_orchestrator/ -v
+docker compose --profile test run --rm test-runner python -m pytest tests/domain/ -v
 docker compose --profile test run --rm test-runner python -m pytest tests/incident_workflow/ -v
 
 # Run tests with detailed coverage report
@@ -302,7 +352,8 @@ For rapid development iterations, you can also run tests locally:
 # Or directly with pytest (requires local Python setup)
 pytest
 pytest tests/domain/
-pytest tests/root_orchestrator/
+pytest tests/domain/
+pytest tests/incident_workflow/
 pytest tests/incident_workflow/
 ```
 

@@ -27,7 +27,8 @@ Docker `depends_on` only waits for containers to start, not for services to be r
 ### 3. Updated Worker Files
 Modified all worker entry points to use the retry utility:
 - `src/incident_workflow/run_worker.py`
-- `src/root_orchestrator/run_worker.py`
+- `src/incident_workflow/run_worker.py`
+- `src/chat_session/run_worker.py`
 - `src/listeners/s3_event_listener.py`
 - `src/listeners/azure_blob_listener.py`
 - `src/listeners/webhook_listener.py`

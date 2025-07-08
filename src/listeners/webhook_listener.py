@@ -24,7 +24,6 @@ class WebhookEventListener:
         port: int = 8000,
         temporal_address: str = "temporal:7233",
         workflow_id_prefix: str = "webhook-event",
-        task_queue: str = "root_orchestrator-queue",
         webhook_secret: Optional[str] = None
     ):
         """Initialize the webhook event listener.
@@ -33,7 +32,6 @@ class WebhookEventListener:
             port: Port to listen on for webhooks
             temporal_address: Address of the Temporal server
             workflow_id_prefix: Prefix for generated workflow IDs
-            task_queue: Task queue for triggering workflows
             webhook_secret: Optional secret for webhook verification
         """
         if not AIOHTTP_AVAILABLE:
@@ -42,7 +40,6 @@ class WebhookEventListener:
         self.port = port
         self.temporal_address = temporal_address
         self.workflow_id_prefix = workflow_id_prefix
-        self.task_queue = task_queue
         self.webhook_secret = webhook_secret
         
         # Temporal client will be initialized in async context
@@ -74,7 +71,7 @@ class WebhookEventListener:
         self.logger.info("Starting Webhook Event Listener")
         self.logger.info(f"Port: {self.port}")
         self.logger.info(f"Temporal Address: {self.temporal_address}")
-        self.logger.info(f"Task Queue: {self.task_queue}")
+        self.logger.info("Triggering domain workflows directly")
         
         # Initialize Temporal client
         self.temporal_client = await connect_to_temporal_with_retry(self.temporal_address)
@@ -307,19 +304,25 @@ class WebhookEventListener:
             event_payload: Event data to send to workflow
         """
         try:
-            self.logger.info(f"Triggering Temporal workflow {workflow_id}")
+            self.logger.info(f"Triggering placeholder workflow {workflow_id}")
             
-            # Start the root orchestrator workflow
-            handle = await self.temporal_client.start_workflow(
-                "RootOrchestratorWorkflow",
+            # All webhook events trigger document processing workflow (placeholder until ready)
+            self.logger.info("Using DocumentProcessingWorkflowPlaceholder - DocumentProcessingWorkflow not implemented yet")
+            await self.temporal_client.start_workflow(
+                "DocumentProcessingWorkflowPlaceholder",
+                args=[{
+                    "document_uri": event_payload.get('documentUri', event_payload.get('blobUrl', 'unknown')),
+                    "source": event_payload.get('source', 'webhook'),
+                    "event_type": event_payload.get('eventType', 'webhook-event'),
+                    "additional_context": {
+                        "webhookData": event_payload
+                    }
+                }],
                 id=workflow_id,
-                task_queue=self.task_queue,
+                task_queue="document_processing-queue",
             )
             
-            # Send the event signal
-            await handle.signal("trigger", event_payload)
-            
-            self.logger.info(f"Successfully triggered workflow {workflow_id}")
+            self.logger.info(f"Successfully triggered placeholder workflow {workflow_id}")
             
         except Exception as e:
             self.logger.error(f"Error triggering Temporal workflow {workflow_id}: {e}")

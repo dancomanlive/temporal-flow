@@ -24,8 +24,8 @@ services:
       retries: 3
       start_period: 60s
 
-  # The Root Orchestrator workflow worker
-  root-orchestrator-worker:
+  # Chat Session workflow worker - manages long-running chat conversations
+  chat-session-worker:
     build:
       context: .
       dockerfile: Dockerfile
@@ -33,9 +33,10 @@ services:
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - PYTHONPATH=/app
+      - AI_API_URL=http://host.docker.internal:3001/api/chat
     volumes:
       - ./src:/app/src
-    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.root_orchestrator.run_worker"]
+    command: ["sh", "-c", "python wait_for_temporal.py && python -m src.chat_session.run_worker"]
     networks:
       - temporal-network
     depends_on:

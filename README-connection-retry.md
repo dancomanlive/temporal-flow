@@ -53,7 +53,8 @@ python wait_for_temporal.py --health-check
 
 All worker files now use the retry utility:
 - `src/incident_workflow/run_worker.py`
-- `src/root_orchestrator/run_worker.py`
+- `src/incident_workflow/run_worker.py`
+- `src/chat_session/run_worker.py`
 - `src/listeners/s3_event_listener.py`
 - `src/listeners/azure_blob_listener.py`
 - `src/listeners/webhook_listener.py`

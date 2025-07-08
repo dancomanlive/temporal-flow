@@ -1,12 +1,28 @@
-# Domain Services + Activity Adapters Pattern
+# Event-Driven Workflow Architecture
 
-## The Problem
-Mixing business logic with Temporal infrastructure creates:
-- Duplicated logic across layers
-- Hard-to-test code (requires Temporal)
-- Tight coupling to framework
+## Overview
 
-## ✅ Solution: Clean Separation
+The Temporal Flow Engine uses an event-driven architecture where external events (S3, Azure Blob, etc.) directly trigger domain-specific workflows. This eliminates the need for a central orchestrator and provides better scalability and maintainability.
+
+## Architecture Principles
+
+### 1. **Direct Workflow Triggering**
+- Events trigger workflows directly
+- No central orchestrator needed
+- Each workflow handles its own domain logic
+
+### 2. **Domain-Specific Workflows**
+- `IncidentWorkflow` - Handles system incidents and alerts
+- `DocumentProcessingWorkflow` - Processes documents (chunking, embedding, indexing)
+- `ChatSessionWorkflow` - Manages chat conversations and state
+
+### 3. **Event Listeners**
+- S3 event listener
+- Azure Blob event listener  
+- Webhook event listener
+- Each listener routes to appropriate workflows
+
+## Domain Services + Activity Adapters Pattern
 
 ```
 Activities (Thin)     →    Domain Services (Pure Business Logic)
@@ -29,34 +45,42 @@ class EventValidationService:
         # More business rules...
         return EventValidationResult(is_valid=True, errors=[])
 
-class OrchestratorDomainService:
-    """Coordinates domain operations."""
+class DocumentProcessingService:
+    """Coordinates document processing operations."""
     
-    def process_event_for_routing(self, raw_event: Any) -> tuple[ValidationResult, RoutingResult]:
-        validation = self.validation_service.validate_event(raw_event)
-        routing = self.routing_service.route_event(validation.normalized_event) if validation.is_valid else None
-        return validation, routing
+    def process_document_event(self, event: Any) -> DocumentProcessingInput:
+        validation = self.validation_service.validate_event(event)
+        if not validation.is_valid:
+            raise ValueError(f"Invalid event: {validation.errors}")
+            
+        return DocumentProcessingInput(
+            document_uri=event.get("documentUri"),
+            source=event.get("source"),
+            event_type=event.get("eventType"),
+            # ... other fields
+        )
 ```
 
 ## Activity Adapters (Thin Delegation)
 
 ```python
-class RootOrchestratorActivities:
+class DocumentProcessingActivities:
     """Thin adapters - delegate everything to domain services."""
     
     def __init__(self):
-        self.domain_service = OrchestratorDomainService()
+        self.domain_service = DocumentProcessingService()
     
     @activity.defn
-    async def validate_event(self, params: ValidateEventParams) -> ValidateEventResult:
+    async def download_document(self, params: DownloadParams) -> DownloadResult:
         # Log (infrastructure concern)
-        activity.logger.info(f"Validating event: {params.event}")
+        activity.logger.info(f"Downloading document: {params.document_uri}")
         
         # DELEGATE - no business logic here
-        result = self.domain_service.validation_service.validate_event(params.event)
+        result = await self.domain_service.download_document(params.document_uri)
         
         # Convert to Temporal result
-        return ValidateEventResult(valid=result.is_valid, errors=result.errors)
+        return DownloadResult(success=result.success, content=result.content)
+```
 ```
 
 ## Benefits
@@ -77,9 +101,9 @@ def test_event_validation():
 
 # Minimal activity tests
 async def test_activity_delegation():
-    activities = RootOrchestratorActivities()
-    result = await activities.validate_event({"event": {"eventType": "test"}})
-    assert result.valid is True
+    activities = DocumentProcessingActivities()
+    result = await activities.download_document({"document_uri": "s3://test/doc.pdf"})
+    assert result.success is True
 ```
 
 ## Anti-Patterns ❌

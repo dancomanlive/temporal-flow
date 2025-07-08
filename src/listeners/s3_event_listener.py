@@ -25,7 +25,6 @@ class S3EventListener:
         sqs_queue_url: str,
         temporal_address: str = "temporal:7233",
         workflow_id_prefix: str = "s3-event",
-        task_queue: str = "root_orchestrator-queue",
         poll_interval: int = 10,
         max_messages: int = 10
     ):
@@ -35,7 +34,6 @@ class S3EventListener:
             sqs_queue_url: URL of the SQS queue to poll
             temporal_address: Address of the Temporal server
             workflow_id_prefix: Prefix for generated workflow IDs
-            task_queue: Task queue for triggering workflows
             poll_interval: How often to poll SQS (seconds)
             max_messages: Maximum messages to retrieve per poll
         """
@@ -45,7 +43,6 @@ class S3EventListener:
         self.sqs_queue_url = sqs_queue_url
         self.temporal_address = temporal_address
         self.workflow_id_prefix = workflow_id_prefix
-        self.task_queue = task_queue
         self.poll_interval = poll_interval
         self.max_messages = max_messages
         
@@ -63,7 +60,7 @@ class S3EventListener:
         self.logger.info("Starting S3 Event Listener")
         self.logger.info(f"SQS Queue: {self.sqs_queue_url}")
         self.logger.info(f"Temporal Address: {self.temporal_address}")
-        self.logger.info(f"Task Queue: {self.task_queue}")
+        self.logger.info("Triggering document processing workflows directly")
         
         # Initialize Temporal client
         self.temporal_client = await connect_to_temporal_with_retry(self.temporal_address)
@@ -219,19 +216,30 @@ class S3EventListener:
             event_payload: Event data to send to workflow
         """
         try:
-            self.logger.info(f"Triggering Temporal workflow {workflow_id}")
+            self.logger.info(f"Triggering placeholder workflow {workflow_id}")
             
-            # Start the root orchestrator workflow
-            handle = await self.temporal_client.start_workflow(
-                "RootOrchestratorWorkflow",
+            # All S3 events trigger document processing workflow (placeholder until ready)
+            self.logger.info("Using DocumentProcessingWorkflowPlaceholder - DocumentProcessingWorkflow not implemented yet")
+            await self.temporal_client.start_workflow(
+                "DocumentProcessingWorkflowPlaceholder",
+                args=[{
+                    "document_uri": event_payload.get('documentUri'),
+                    "source": "s3",
+                    "event_type": event_payload.get('eventType'),
+                    "bucket": event_payload.get('bucket'),
+                    "key": event_payload.get('key'),
+                    "size": event_payload.get('size'),
+                    "timestamp": event_payload.get('timestamp'),
+                    "additional_context": {
+                        "s3EventName": event_payload.get('s3EventName'),
+                        "rawEvent": event_payload.get('rawEvent')
+                    }
+                }],
                 id=workflow_id,
-                task_queue=self.task_queue,
+                task_queue="document_processing-queue",
             )
             
-            # Send the event signal
-            await handle.signal("trigger", event_payload)
-            
-            self.logger.info(f"Successfully triggered workflow {workflow_id}")
+            self.logger.info(f"Successfully triggered placeholder workflow {workflow_id}")
             
         except Exception as e:
             self.logger.error(f"Error triggering Temporal workflow {workflow_id}: {e}")

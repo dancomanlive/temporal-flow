@@ -27,7 +27,6 @@ class AzureBlobEventListener:
         subscription_name: str,
         temporal_address: str = "temporal:7233",
         workflow_id_prefix: str = "azure-event",
-        task_queue: str = "root_orchestrator-queue",
         poll_interval: int = 10,
         max_messages: int = 10
     ):
@@ -39,7 +38,6 @@ class AzureBlobEventListener:
             subscription_name: Service Bus subscription name  
             temporal_address: Address of the Temporal server
             workflow_id_prefix: Prefix for generated workflow IDs
-            task_queue: Task queue for triggering workflows
             poll_interval: How often to poll for messages (seconds)
             max_messages: Maximum messages to retrieve per poll
         """
@@ -51,7 +49,6 @@ class AzureBlobEventListener:
         self.subscription_name = subscription_name
         self.temporal_address = temporal_address
         self.workflow_id_prefix = workflow_id_prefix
-        self.task_queue = task_queue
         self.poll_interval = poll_interval
         self.max_messages = max_messages
         
@@ -70,7 +67,7 @@ class AzureBlobEventListener:
         self.logger.info(f"Topic: {self.topic_name}")
         self.logger.info(f"Subscription: {self.subscription_name}")
         self.logger.info(f"Temporal Address: {self.temporal_address}")
-        self.logger.info(f"Task Queue: {self.task_queue}")
+        self.logger.info("Triggering document processing workflows directly")
         
         # Initialize Temporal client
         self.temporal_client = await connect_to_temporal_with_retry(self.temporal_address)
@@ -246,19 +243,30 @@ class AzureBlobEventListener:
             event_payload: Event data to send to workflow
         """
         try:
-            self.logger.info(f"Triggering Temporal workflow {workflow_id}")
+            self.logger.info(f"Triggering placeholder workflow {workflow_id}")
             
-            # Start the root orchestrator workflow
-            handle = await self.temporal_client.start_workflow(
-                "RootOrchestratorWorkflow",
+            # All Azure Blob events trigger document processing workflow (placeholder until ready)
+            self.logger.info("Using DocumentProcessingWorkflowPlaceholder - DocumentProcessingWorkflow not implemented yet")
+            await self.temporal_client.start_workflow(
+                "DocumentProcessingWorkflowPlaceholder",
+                args=[{
+                    "document_uri": event_payload.get('documentUri'),
+                    "source": "azure-blob",
+                    "event_type": event_payload.get('eventType'),
+                    "container": event_payload.get('container'),
+                    "blob_name": event_payload.get('blobName'),
+                    "size": event_payload.get('size'),
+                    "timestamp": event_payload.get('timestamp'),
+                    "additional_context": {
+                        "azureBlobEvent": event_payload.get('azureBlobEvent'),
+                        "rawEvent": event_payload.get('rawEvent')
+                    }
+                }],
                 id=workflow_id,
-                task_queue=self.task_queue,
+                task_queue="document_processing-queue",
             )
             
-            # Send the event signal
-            await handle.signal("trigger", event_payload)
-            
-            self.logger.info(f"Successfully triggered workflow {workflow_id}")
+            self.logger.info(f"Successfully triggered placeholder workflow {workflow_id}")
             
         except Exception as e:
             self.logger.error(f"Error triggering Temporal workflow {workflow_id}: {e}")

@@ -30,11 +30,9 @@ tests/
 ├── __init__.py
 ├── domain/
 │   ├── __init__.py
+│   ├── test_workflow_inputs.py
 │   └── test_workflow_routing.py
-├── incident_workflow/
-│   ├── __init__.py
-│   └── test_activities.py
-└── root_orchestrator/
+└── incident_workflow/
     ├── __init__.py
     └── test_activities.py
 ```
@@ -59,25 +57,16 @@ pip install pytest pytest-asyncio
 
 ## Test Coverage
 
-### Root Orchestrator Tests (`tests/root_orchestrator/test_activities.py`)
+### Domain Tests (`tests/domain/`)
 
-#### Event Validation
-- ✅ Valid event processing
-- ✅ Missing event type validation
-- ✅ Empty event type validation  
-- ✅ Invalid source type validation
-- ✅ Non-dict event validation
+#### Workflow Input Tests (`test_workflow_inputs.py`)
+- ✅ IncidentWorkflowInput creation with all parameters
+- ✅ IncidentWorkflowInput creation with minimal parameters
+- ✅ DocumentProcessingInput creation with all parameters  
+- ✅ DocumentProcessingInput creation with minimal parameters
+- ✅ Backwards compatibility support
 
-#### Event Routing
-- ✅ Route by event type
-- ✅ Route by source
-- ✅ Default workflow routing
-- ✅ Custom configuration support
-- ✅ No matching workflow handling
-- ✅ Disabled workflow handling
-- ✅ Invalid custom configuration handling
-
-### Domain Logic Tests (`tests/domain/test_workflow_routing.py`)
+#### Workflow Routing Tests (`test_workflow_routing.py`)
 
 #### Workflow Router
 - ✅ Route by event type

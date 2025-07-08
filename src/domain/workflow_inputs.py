@@ -26,21 +26,31 @@ class IncidentWorkflowInput:
 
 
 @dataclass
-class RootOrchestratorInput:
-    """Input for the root orchestrator workflow.
+class DocumentProcessingInput:
+    """Input for document processing workflow.
     
-    This allows the orchestrator to receive structured input while maintaining
-    backwards compatibility through optional fields.
+    Triggered by storage events (S3, Azure Blob, etc.) to process documents
+    through chunking, embedding, and indexing pipeline.
     """
-    # Event data
-    event_payload: Optional[Dict[str, Any]] = None
+    # Document information
+    document_uri: str
+    source: str  # "s3", "azure-blob", "sharepoint", etc.
+    event_type: str
     
-    # Configuration overrides
-    configuration: Optional[Dict[str, Any]] = None
+    # Optional metadata from event
+    bucket: Optional[str] = None
+    key: Optional[str] = None
+    container: Optional[str] = None
+    blob_name: Optional[str] = None
+    size: Optional[int] = None
+    content_type: Optional[str] = None
+    timestamp: Optional[str] = None
     
-    # Workflow routing hints
-    target_workflow: Optional[str] = None
-    force_route: bool = False
+    # Processing configuration
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
+    embedding_model: str = "text-embedding-3-small"
+    index_name: Optional[str] = None
     
     # Additional context
-    metadata: Optional[Dict[str, Any]] = None
+    additional_context: Optional[Dict[str, Any]] = None
