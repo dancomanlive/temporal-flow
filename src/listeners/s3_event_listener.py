@@ -218,10 +218,9 @@ class S3EventListener:
         try:
             self.logger.info(f"Triggering placeholder workflow {workflow_id}")
             
-            # All S3 events trigger document processing workflow (placeholder until ready)
-            self.logger.info("Using DocumentProcessingWorkflowPlaceholder - DocumentProcessingWorkflow not implemented yet")
+            # All S3 events trigger document processing workflow
             await self.temporal_client.start_workflow(
-                "DocumentProcessingWorkflowPlaceholder",
+                "DocumentProcessingWorkflow",
                 args=[{
                     "document_uri": event_payload.get('documentUri'),
                     "source": "s3",

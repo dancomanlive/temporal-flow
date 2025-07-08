@@ -306,10 +306,9 @@ class WebhookEventListener:
         try:
             self.logger.info(f"Triggering placeholder workflow {workflow_id}")
             
-            # All webhook events trigger document processing workflow (placeholder until ready)
-            self.logger.info("Using DocumentProcessingWorkflowPlaceholder - DocumentProcessingWorkflow not implemented yet")
+            # All webhook events trigger document processing workflow
             await self.temporal_client.start_workflow(
-                "DocumentProcessingWorkflowPlaceholder",
+                "DocumentProcessingWorkflow",
                 args=[{
                     "document_uri": event_payload.get('documentUri', event_payload.get('blobUrl', 'unknown')),
                     "source": event_payload.get('source', 'webhook'),

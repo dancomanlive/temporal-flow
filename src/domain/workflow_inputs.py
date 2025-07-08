@@ -34,7 +34,7 @@ class DocumentProcessingInput:
     """
     # Document information
     document_uri: str
-    source: str  # "s3", "azure-blob", "sharepoint", etc.
+    source: str  # "s3", "azure_blob", "chat", "webhook", etc.
     event_type: str
     
     # Optional metadata from event
@@ -45,6 +45,13 @@ class DocumentProcessingInput:
     size: Optional[int] = None
     content_type: Optional[str] = None
     timestamp: Optional[str] = None
+    
+    # Chat-specific fields
+    user_id: Optional[str] = None
+    file_size: Optional[int] = None
+    
+    # Webhook-specific fields
+    webhook_id: Optional[str] = None
     
     # Processing configuration
     chunk_size: int = 1000
