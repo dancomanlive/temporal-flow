@@ -3,6 +3,17 @@
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
 
+@dataclass
+class SemanticSearchInput:
+    """Input for semantic search workflow."""
+    query: str
+    session_id: str
+    user_id: str
+    model: str = "text-embedding-ada-002"
+    top_k: int = 5
+    metadata: Optional[Dict[str, Any]] = None
+    additional_context: Optional[Dict[str, Any]] = None
+
 
 @dataclass
 class DocumentProcessingInput:

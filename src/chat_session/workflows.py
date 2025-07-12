@@ -5,6 +5,8 @@ from typing import Dict, Any, List, Optional
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
 from dataclasses import dataclass
+from ..semantic_search.workflows import SemanticSearchWorkflow
+from .activities import activities_instance
 
 
 @dataclass
@@ -154,13 +156,6 @@ class ChatSessionWorkflow:
         except Exception as e:
             workflow.logger.error(f"Failed to trigger workflow: {e}")
             raise ApplicationError(f"Failed to trigger workflow: {e}")
-            
-            self._triggered_workflows.append(workflow_id)
-            workflow.logger.info(f"Successfully triggered workflow: {workflow_id}")
-            
-        except Exception as e:
-            workflow.logger.error(f"Failed to trigger workflow: {e}")
-            raise ApplicationError(f"Failed to trigger workflow: {e}")
     
     @workflow.signal
     async def update_user(self, user_data: Dict[str, Any]):
@@ -292,19 +287,18 @@ class ChatSessionWorkflow:
         try:
             # Main chat session loop
             while self._state.is_active:
-                # Process queued AI messages
-                if self._ai_processing_queue:
+                # Process ALL queued AI messages
+                while self._ai_processing_queue and self._state.is_active:
                     message = self._ai_processing_queue.pop(0)
                     await self._process_ai_message(message)
                 
-                # Check for session timeout (24 hours of inactivity)
-                await workflow.wait_condition(
-                    lambda: not self._state.is_active or self._ai_processing_queue,
-                    timeout=timedelta(hours=24)
-                )
-                
-                if not self._state.is_active:
-                    break
+                # Only wait if no messages are queued and session is still active
+                if self._state.is_active and not self._ai_processing_queue:
+                    # Wait for new messages or session to end (24 hours timeout)
+                    await workflow.wait_condition(
+                        lambda: not self._state.is_active or self._ai_processing_queue,
+                        timeout=timedelta(hours=24)
+                    )
             
             workflow.logger.info("Chat session ended normally")
             return f"Chat session {self._state.session_id} completed. Messages: {self._state.message_count}, Triggered workflows: {len(self._triggered_workflows)}"
@@ -313,50 +307,100 @@ class ChatSessionWorkflow:
             workflow.logger.error(f"Chat session failed: {e}")
             return f"Chat session {self._state.session_id} failed: {e}"
     
-    async def _process_ai_message(self, message: ChatMessage):
+    async def _process_ai_message(self, message: ChatMessage) -> Dict[str, Any]:
         """Process a message for AI response and workflow triggers.
         
         Args:
             message: The chat message to process
+        
+        Returns:
+            Processing result with metadata
         """
         workflow.logger.info(f"Processing AI message: {message.message_id}")
+        result = {"processed": False}
         
         try:
-            # Check if message should trigger workflows
-            if message.role == 'user':
-                workflow_keywords = ['document', 'process', 'workflow', 'automation']
-                content_lower = message.content.lower()
+            # First analyze message for potential workflows
+            user_context = {
+                'userId': message.user_id,
+                'sessionId': self._state.session_id if self._state else "unknown",
+                'userType': self._state.user_type if self._state else 'guest'
+            }
+            
+            analysis_result = await workflow.execute_activity(
+                activities_instance.analyze_message_for_workflows,
+                args=[message.content, user_context],
+                start_to_close_timeout=timedelta(seconds=10)
+            )
                 
-                for keyword in workflow_keywords:
-                    if keyword in content_lower:
-                        workflow.logger.info(f"Detected workflow keyword '{keyword}' in message")
-                        # If the keyword is 'document', trigger document-added event
-                        if keyword == 'document':
+            if analysis_result.get('shouldTriggerWorkflow', False):
+                    detected_workflows = analysis_result.get('detectedWorkflows', [])
+                    primary_workflow = analysis_result.get('primaryWorkflow')
+                    
+                    if primary_workflow:
+                        workflow_type = primary_workflow.get('type')
+                        workflow.logger.info(f"Detected workflow type '{workflow_type}' in message")
+                        
+                        # Map workflow types to event types
+                        if workflow_type == 'search':
+                            search_result = await workflow.execute_child_workflow(
+                                "SemanticSearchWorkflow",
+                                args=[{
+                                    "query": message.content,
+                                    "session_id": self._state.session_id if self._state else "unknown",
+                                    "user_id": message.user_id,
+                                    "metadata": {
+                                        "messageId": message.message_id
+                                    }
+                                }],
+                                id=f"semantic-search-{message.message_id}",
+                                task_queue="semantic-search-queue"
+                            )
+                            
+                            if search_result.get("success"):
+                                workflow.logger.info(f"Semantic search completed for message: {message.message_id}")
+                                result["search_triggered"] = True
+                                result["search_result"] = search_result
+                                # Continue processing instead of returning early
+                            else:
+                                workflow.logger.error(f"Semantic search failed for message: {message.message_id}")
+                        elif workflow_type == 'document':
                             await self.trigger_workflow({
                                 'eventType': 'document-added',
                                 'message': message.content,
                                 'priority': 'normal',
                                 'metadata': {
                                     'messageId': message.message_id,
-                                    'detectedKeyword': keyword
+                                    'detectedWorkflows': detected_workflows,
+                                    'confidence': analysis_result.get('confidence', 0.0)
                                 }
                             })
-                        else:
+                        elif workflow_type in ['data', 'automation']:
                             await self.trigger_workflow({
                                 'eventType': 'user-request',
                                 'message': message.content,
                                 'priority': 'normal',
                                 'metadata': {
                                     'messageId': message.message_id,
-                                    'detectedKeyword': keyword
+                                    'workflowType': workflow_type,
+                                    'detectedWorkflows': detected_workflows,
+                                    'confidence': analysis_result.get('confidence', 0.0)
                                 }
                             })
-                        break
             
-            # Here you would integrate with the AI system to generate responses
-            # For now, we'll just log that the message was processed
-            workflow.logger.info(f"AI message processed: {message.message_id}")
+            # Search handling is done above in the workflow detection section
+            
+            # Process workflow acknowledgment (no AI response needed since chat API handles that)
+            workflow_response = await workflow.execute_activity(
+                activities_instance.generate_ai_response,
+                args=[message.content, [], user_context],  # Empty history to avoid circular processing
+                start_to_close_timeout=timedelta(seconds=10)  # Shorter timeout since it's just acknowledgment
+            )
+            
+            result.update({"processed": True, "workflow_response": workflow_response})
             
         except Exception as e:
             workflow.logger.error(f"Error processing AI message: {e}")
-            # Don't fail the whole workflow for individual message processing errors
+            result["error"] = str(e)
+            
+        return result

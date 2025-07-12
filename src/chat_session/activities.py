@@ -20,11 +20,6 @@ class AIResponse:
 class ChatSessionActivities:
     """Activities for chat session workflow operations."""
     
-    def __init__(self):
-        """Initialize chat session activities."""
-        self.ai_api_url = os.getenv('AI_API_URL', 'http://localhost:3001/api/chat')
-        self.ai_api_key = os.getenv('AI_API_KEY', '')
-    
     @activity.defn
     async def generate_ai_response(
         self, 
@@ -34,6 +29,11 @@ class ChatSessionActivities:
     ) -> AIResponse:
         """Generate AI response for a chat message.
         
+        Note: This activity is called from within the ChatSessionWorkflow.
+        Since the chat API already handles AI response generation via the UI,
+        this activity should focus on workflow-specific processing rather than
+        generating duplicate responses.
+        
         Args:
             message: User message content
             conversation_history: Previous messages in conversation
@@ -42,57 +42,33 @@ class ChatSessionActivities:
         Returns:
             AI response with content and metadata
         """
-        activity.logger.info(f"Generating AI response for message length: {len(message)}")
+        activity.logger.info(f"Processing workflow message for analysis: {len(message)} chars")
         
         try:
-            # Prepare request payload for AI API
-            payload = {
-                "message": message,
-                "history": conversation_history,
-                "context": user_context,
-                "stream": False  # For workflow integration, we want complete responses
-            }
+            # For workflow integration, we don't need to generate AI responses
+            # since the chat API already handles that. Instead, we focus on
+            # workflow-specific processing and return a simple acknowledgment.
             
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.ai_api_key}" if self.ai_api_key else ""
-            }
+            # Log the message processing for debugging
+            activity.logger.info(f"Workflow processed message from user {user_context.get('userId', 'unknown')}")
             
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.ai_api_url,
-                    json=payload,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=60)
-                ) as response:
-                    
-                    if response.status == 200:
-                        result = await response.json()
-                        
-                        return AIResponse(
-                            content=result.get('content', 'No response generated'),
-                            metadata=result.get('metadata', {}),
-                            tools_used=result.get('toolsUsed', []),
-                            workflow_triggered=result.get('workflowTriggered', False)
-                        )
-                    else:
-                        activity.logger.error(f"AI API error: {response.status}")
-                        return AIResponse(
-                            content="I apologize, but I'm having trouble generating a response right now. Please try again.",
-                            metadata={"error": f"API error: {response.status}"}
-                        )
-                        
-        except asyncio.TimeoutError:
-            activity.logger.error("AI API timeout")
             return AIResponse(
-                content="I'm taking longer than usual to respond. Please try again.",
-                metadata={"error": "timeout"}
+                content="Message processed by workflow",
+                metadata={
+                    "processed_by": "ChatSessionWorkflow",
+                    "message_length": len(message),
+                    "user_context": user_context,
+                    "workflow_processing": True
+                },
+                tools_used=["workflow_analysis"],
+                workflow_triggered=True
             )
+                        
         except Exception as e:
-            activity.logger.error(f"Error generating AI response: {e}")
+            activity.logger.error(f"Error processing workflow message: {e}")
             return AIResponse(
-                content="I encountered an error while processing your message. Please try again.",
-                metadata={"error": str(e)}
+                content="Workflow message processing completed with errors",
+                metadata={"error": str(e), "workflow_processing": True}
             )
     
     @activity.defn
@@ -116,11 +92,20 @@ class ChatSessionActivities:
         workflow_keywords = {
             'document': ['document', 'file', 'upload', 'process', 'analyze', 'pdf', 'doc'],
             'data': ['data', 'pipeline', 'etl', 'process', 'batch', 'job', 'analytics'],
-            'automation': ['automate', 'workflow', 'trigger', 'run', 'execute', 'schedule']
+            'automation': ['automate', 'workflow', 'trigger', 'run', 'execute', 'schedule'],
+            'search': ['search', 'find', 'lookup', 'query', 'retrieve']
         }
         
         message_lower = message.lower()
         detected_workflows = []
+        
+        # Check for question marks which typically indicate search intent
+        if '?' in message:
+            detected_workflows.append({
+                'type': 'search',
+                'keyword': '?',
+                'confidence': 0.9
+            })
         
         for workflow_type, keywords in workflow_keywords.items():
             for keyword in keywords:
